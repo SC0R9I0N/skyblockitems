@@ -4,7 +4,7 @@ A standalone **Electron + React** desktop app that browses every Hypixel Skybloc
 Minecraft-styled UI: square inventory slots, hover tooltips with §-color-coded lore, creative-mode
 search bar, crafting recipes, pets, and persistent favorites.
 
-![tabs] All Items · Weapons · Armor · Equipment · Accessories · Pets · Pet Items · Misc · ★ Favorites
+![tabs] All Items · Weapons · Armor · Equipment · Accessories · Cosmetics · Pets · Pet Items · Misc · ★ Favorites
 
 **v2 features:** dark mode · hide-vanilla-items filter · rarity-colored slot borders with hover
 glow · Minecraft-styled calculator (`+ - * /`, parentheses, `1.5e3` notation) · automatic
@@ -99,7 +99,7 @@ interface SkyblockItem {
   id: string;              // ASPECT_OF_THE_END, PET_ENDER_DRAGON, ...
   name: string;
   category: string;        // raw Hypixel category (SWORD, ACCESSORY, PET, ...)
-  tab: 'weapons'|'armor'|'equipment'|'accessories'|'pets'|'pet_items'|'misc';
+  tab: 'weapons'|'armor'|'equipment'|'accessories'|'cosmetics'|'pets'|'pet_items'|'misc';
   tier: string;            // COMMON..MYTHIC — drives name colors
   lore: string[];          // Minecraft §-coded lines
   stats?: Record<string, number>;
@@ -123,6 +123,7 @@ interface SkyblockItem {
 | Armor | HELMET, CHESTPLATE, LEGGINGS, BOOTS |
 | Equipment | NECKLACE, CLOAK, BELT, GLOVES, BRACELET |
 | Accessories | ACCESSORY |
+| Cosmetics | COSMETIC (pet/armor/barn/greenhouse/minion skins) + `DYE_*` armor dyes (NEU-only) |
 | Pets | (from NEU pet definitions) |
 | Pet Items | PET_ITEM |
 | Misc | everything else (tools, reforge stones, consumables, ...) |

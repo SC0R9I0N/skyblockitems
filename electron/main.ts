@@ -88,8 +88,8 @@ async function refreshDataset(): Promise<string> {
   const W = new Set(['SWORD', 'BOW', 'LONGSWORD', 'WAND', 'GAUNTLET', 'ARROW', 'ARROW_POISON', 'FISHING_WEAPON']);
   const A = new Set(['HELMET', 'CHESTPLATE', 'LEGGINGS', 'BOOTS']);
   const E = new Set(['NECKLACE', 'CLOAK', 'BELT', 'GLOVES', 'BRACELET']);
-  const tabFor = (c: string) =>
-    W.has(c) ? 'weapons' : A.has(c) ? 'armor' : c === 'ACCESSORY' ? 'accessories' : E.has(c) ? 'equipment' : c === 'PET_ITEM' ? 'pet_items' : c === 'PET' ? 'pets' : 'misc';
+  const tabFor = (c: string, id = '') =>
+    c === 'COSMETIC' || id.startsWith('DYE_') ? 'cosmetics' : W.has(c) ? 'weapons' : A.has(c) ? 'armor' : c === 'ACCESSORY' ? 'accessories' : E.has(c) ? 'equipment' : c === 'PET_ITEM' ? 'pet_items' : c === 'PET' ? 'pets' : 'misc';
 
   for (const h of fresh.items) {
     const existing = byId.get(h.id);
@@ -100,7 +100,7 @@ async function refreshDataset(): Promise<string> {
       existing.npcSellPrice = h.npc_sell_price ?? existing.npcSellPrice;
       if (h.category && h.category !== existing.category) {
         existing.category = h.category;
-        existing.tab = tabFor(h.category);
+        existing.tab = tabFor(h.category, h.id);
       }
     } else {
       let icon: any = { kind: 'none' };
@@ -115,7 +115,7 @@ async function refreshDataset(): Promise<string> {
         id: h.id,
         name: h.name ?? h.id,
         category: h.category ?? 'NONE',
-        tab: tabFor(h.category ?? 'NONE'),
+        tab: tabFor(h.category ?? 'NONE', h.id),
         tier: h.tier ?? 'COMMON',
         lore: [],
         stats: h.stats,

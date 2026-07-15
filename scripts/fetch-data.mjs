@@ -647,7 +647,10 @@ const TAB_WEAPONS = new Set(['SWORD', 'BOW', 'LONGSWORD', 'WAND', 'GAUNTLET', 'A
 const TAB_ARMOR = new Set(['HELMET', 'CHESTPLATE', 'LEGGINGS', 'BOOTS']);
 const TAB_EQUIP = new Set(['NECKLACE', 'CLOAK', 'BELT', 'GLOVES', 'BRACELET']);
 
-function tabFor(category) {
+function tabFor(category, id = '') {
+  // Hypixel's COSMETIC category covers pet/armor/barn/greenhouse/minion
+  // skins; armor dyes come from NEU (the API doesn't list them) as DYE_*.
+  if (category === 'COSMETIC' || id.startsWith('DYE_')) return 'cosmetics';
   if (TAB_WEAPONS.has(category)) return 'weapons';
   if (TAB_ARMOR.has(category)) return 'armor';
   if (category === 'ACCESSORY') return 'accessories';
@@ -705,7 +708,7 @@ for (const h of hypixel.items) {
     id: h.id,
     name: h.name ?? stripCodes(neu?.displayname) ?? titleCase(h.id),
     category: h.category ?? 'NONE',
-    tab: tabFor(h.category ?? 'NONE'),
+    tab: tabFor(h.category ?? 'NONE', h.id),
     tier: h.tier ?? 'COMMON',
     lore: neu?.lore ?? [],
     stats: h.stats && Object.keys(h.stats).length ? h.stats : undefined,
@@ -754,6 +757,30 @@ for (const [type, variants] of petFiles) {
   });
 }
 console.log(`      ${petFiles.size} pets`);
+
+// Armor dyes exist only in NEU — the Hypixel items API doesn't list them.
+// Their rarity is the last lore line ("§5§lEPIC DYE").
+console.log('[4.5/8] armor dyes from NEU...');
+let dyeCount = 0;
+for (const [internal, json] of neuItems) {
+  if (!internal.startsWith('DYE_') || existingIds.has(internal)) continue;
+  const hash = skullHashFromNbt(json.nbttag);
+  const rarityWord = stripCodes(json.lore?.at(-1) ?? '').trim().split(/\s+/)[0];
+  items.push({
+    id: internal,
+    name: stripCodes(json.displayname) || titleCase(internal),
+    category: 'COSMETIC',
+    tab: tabFor('COSMETIC', internal),
+    tier: RARITY_NAMES.includes(rarityWord) ? rarityWord : 'COMMON',
+    lore: json.lore ?? [],
+    icon: hash ? { kind: 'skull', url: MC_HEADS(hash) } : { kind: 'none' },
+    sources: sourcesFromNeu(json),
+    recipe: craftingGrid(json),
+    wiki: json.info?.filter((u) => typeof u === 'string' && u.startsWith('http')),
+  });
+  dyeCount++;
+}
+console.log(`      ${dyeCount} dyes`);
 
 console.log('[5/8] wiki item sprites (paper/missing icons)...');
 {
