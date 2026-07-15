@@ -1,4 +1,5 @@
 import { app, BrowserWindow, ipcMain, protocol, net, shell } from 'electron';
+import { spawn } from 'node:child_process';
 import path from 'node:path';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
@@ -173,6 +174,100 @@ function writeSettings(s: typeof DEFAULT_SETTINGS) {
   fs.renameSync(tmp, file);
 }
 
+// -------------------------------------------------------------- app updates
+
+// The repo root holds the standalone installer plus a build-info.json stamp
+// written by the same `npm run dist` run. Comparing the bundled stamp's
+// buildId with the remote one answers "is GitHub different from what I'm
+// running?"; the update then downloads the installer, verifies its SHA-256
+// against the stamp, and hands off to the silent NSIS install.
+// SB_UPDATE_BASE_URL exists for integration tests only (points the checker at
+// a local fixture server); end users always hit the hardcoded GitHub URL.
+const UPDATE_BASE_URL =
+  process.env.SB_UPDATE_BASE_URL ?? 'https://raw.githubusercontent.com/SC0R9I0N/skyblockitems/main';
+
+type BuildInfo = {
+  version: string;
+  buildId: string;
+  builtAt?: string;
+  installerSha256?: string;
+  installerSize?: number;
+};
+
+function localBuildInfo(): BuildInfo | null {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(dataDir(), 'build-info.json'), 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+async function fetchRemoteBuildInfo(): Promise<BuildInfo> {
+  const res = await net.fetch(`${UPDATE_BASE_URL}/build-info.json`, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`build-info.json: HTTP ${res.status}`);
+  const info = (await res.json()) as BuildInfo;
+  if (!info?.buildId || !/^[0-9a-f]{64}$/.test(info.installerSha256 ?? '')) {
+    throw new Error('remote build-info.json is malformed');
+  }
+  return info;
+}
+
+async function checkForUpdate() {
+  const local = localBuildInfo();
+  if (!local) throw new Error('this copy has no build stamp (dev build?)');
+  const remote = await fetchRemoteBuildInfo();
+  return {
+    updateAvailable: remote.buildId !== local.buildId,
+    localVersion: local.version,
+    remoteVersion: remote.version,
+    remoteBuiltAt: remote.builtAt ?? null,
+  };
+}
+
+async function downloadAndInstallUpdate(onProgress: (pct: number) => void) {
+  const local = localBuildInfo();
+  if (!local) throw new Error('this copy has no build stamp (dev build?)');
+  const remote = await fetchRemoteBuildInfo();
+  if (remote.buildId === local.buildId) return { started: false }; // nothing new
+
+  const res = await net.fetch(`${UPDATE_BASE_URL}/Skyblock-Item-Browser-Setup.exe`, { cache: 'no-store' });
+  if (!res.ok || !res.body) throw new Error(`installer download: HTTP ${res.status}`);
+
+  const hash = crypto.createHash('sha256');
+  const chunks: Buffer[] = [];
+  let received = 0;
+  const total = remote.installerSize ?? (Number(res.headers.get('content-length')) || 0);
+  const reader = res.body.getReader();
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const chunk = Buffer.from(value);
+    chunks.push(chunk);
+    hash.update(chunk);
+    received += chunk.length;
+    if (total > 0) onProgress(Math.min(99, Math.round((received / total) * 100)));
+  }
+
+  const digest = hash.digest('hex');
+  if (digest !== remote.installerSha256) {
+    throw new Error('downloaded installer failed its integrity check (SHA-256 mismatch)');
+  }
+  if (remote.installerSize && received !== remote.installerSize) {
+    throw new Error('downloaded installer is truncated');
+  }
+
+  const installerPath = path.join(app.getPath('temp'), `skyblock-item-browser-update-${Date.now()}.exe`);
+  fs.writeFileSync(installerPath, Buffer.concat(chunks));
+  onProgress(100);
+
+  // Silent one-click install; --force-run relaunches the app when it's done.
+  // The NSIS package closes the running instance itself, but quitting right
+  // away makes the swap immediate and clean.
+  spawn(installerPath, ['/S', '--force-run'], { detached: true, stdio: 'ignore' }).unref();
+  setTimeout(() => app.quit(), 400);
+  return { started: true };
+}
+
 // ---------------------------------------------------------------- wiki fetch
 
 type WikiEntry = { url: string; text: string; fetchedAt: number };
@@ -323,6 +418,14 @@ app.whenReady().then(() => {
   ipcMain.handle('shell:openExternal', (_e, url: string) => {
     if (hostAllowed(url, ALLOWED_WIKI_HOSTS)) shell.openExternal(url);
   });
+
+  ipcMain.handle('update:check', () => checkForUpdate());
+
+  ipcMain.handle('update:apply', (event) =>
+    downloadAndInstallUpdate((pct) => {
+      if (!event.sender.isDestroyed()) event.sender.send('update:progress', pct);
+    }),
+  );
 
   createWindow();
   app.on('activate', () => {

@@ -23,6 +23,9 @@ level-100 pet stats per rarity · power stone sample stats at 1,000 Magical Powe
 - At runtime the app only contacts a fixed allowlist of HTTPS hosts (Hypixel API, the two
   Skyblock wikis, mc-heads.net, raw.githubusercontent.com) to refresh item data and fetch the
   few icons that aren't bundled; nothing is sent anywhere.
+- Updating later is one click: the **⬇ Update** button (bottom bar) compares your installed
+  build against this repo, and only when they differ downloads the new installer, verifies
+  its SHA-256 against the repo's `build-info.json`, and reinstalls/relaunches itself.
 
 ## Quick start
 
@@ -40,6 +43,8 @@ npm run dist         # → release/Skyblock Item Browser Setup <version>.exe  (i
                      #   release/Skyblock Item Browser <version>.exe        (portable)
                      #   Skyblock-Item-Browser-Setup.exe  (repo-root copy for the
                      #   standalone download link above; keep it under 100 MiB)
+                     #   build-info.json  (build stamp + installer SHA-256 — the in-app
+                     #   ⬇ Update button needs it; always publish it WITH the exe)
 ```
 
 The app icon lives at `build/icon.png` (electron-builder converts it per-platform).

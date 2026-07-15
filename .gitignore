@@ -10,6 +10,7 @@ release/
 .cache/
 data/items.json
 data/icons/
+data/build-info.json
 
 # local tool settings
 .claude/

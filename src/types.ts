@@ -91,6 +91,14 @@ declare global {
       openExternal: (url: string) => Promise<void>;
       getSettings: () => Promise<AppSettings>;
       patchSettings: (patch: Partial<AppSettings>) => Promise<AppSettings>;
+      checkUpdate: () => Promise<{
+        updateAvailable: boolean;
+        localVersion: string;
+        remoteVersion: string;
+        remoteBuiltAt: string | null;
+      }>;
+      applyUpdate: () => Promise<{ started: boolean }>;
+      onUpdateProgress: (cb: (pct: number) => void) => () => void;
     };
   }
 }

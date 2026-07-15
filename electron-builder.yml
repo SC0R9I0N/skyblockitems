@@ -24,6 +24,7 @@ extraResources:
     filter:
       - items.json
       - icons/**
+      - build-info.json
 win:
   target:
     - nsis
