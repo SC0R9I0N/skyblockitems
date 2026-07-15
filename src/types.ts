@@ -3,6 +3,7 @@ export type TabId =
   | 'weapons'
   | 'armor'
   | 'equipment'
+  | 'accessories'
   | 'pets'
   | 'pet_items'
   | 'misc'

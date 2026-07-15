@@ -645,11 +645,12 @@ const RARITY_NAMES = ['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY', 'MYTHIC
 
 const TAB_WEAPONS = new Set(['SWORD', 'BOW', 'LONGSWORD', 'WAND', 'GAUNTLET', 'ARROW', 'ARROW_POISON', 'FISHING_WEAPON']);
 const TAB_ARMOR = new Set(['HELMET', 'CHESTPLATE', 'LEGGINGS', 'BOOTS']);
-const TAB_EQUIP = new Set(['NECKLACE', 'CLOAK', 'BELT', 'GLOVES', 'BRACELET', 'ACCESSORY']);
+const TAB_EQUIP = new Set(['NECKLACE', 'CLOAK', 'BELT', 'GLOVES', 'BRACELET']);
 
 function tabFor(category) {
   if (TAB_WEAPONS.has(category)) return 'weapons';
   if (TAB_ARMOR.has(category)) return 'armor';
+  if (category === 'ACCESSORY') return 'accessories';
   if (TAB_EQUIP.has(category)) return 'equipment';
   if (category === 'PET_ITEM') return 'pet_items';
   if (category === 'PET') return 'pets';

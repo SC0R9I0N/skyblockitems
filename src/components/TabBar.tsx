@@ -5,6 +5,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'weapons', label: 'Weapons' },
   { id: 'armor', label: 'Armor' },
   { id: 'equipment', label: 'Equipment' },
+  { id: 'accessories', label: 'Accessories' },
   { id: 'pets', label: 'Pets' },
   { id: 'pet_items', label: 'Pet Items' },
   { id: 'misc', label: 'Misc' },

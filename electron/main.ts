@@ -87,9 +87,9 @@ async function refreshDataset(): Promise<string> {
 
   const W = new Set(['SWORD', 'BOW', 'LONGSWORD', 'WAND', 'GAUNTLET', 'ARROW', 'ARROW_POISON', 'FISHING_WEAPON']);
   const A = new Set(['HELMET', 'CHESTPLATE', 'LEGGINGS', 'BOOTS']);
-  const E = new Set(['NECKLACE', 'CLOAK', 'BELT', 'GLOVES', 'BRACELET', 'ACCESSORY']);
+  const E = new Set(['NECKLACE', 'CLOAK', 'BELT', 'GLOVES', 'BRACELET']);
   const tabFor = (c: string) =>
-    W.has(c) ? 'weapons' : A.has(c) ? 'armor' : E.has(c) ? 'equipment' : c === 'PET_ITEM' ? 'pet_items' : c === 'PET' ? 'pets' : 'misc';
+    W.has(c) ? 'weapons' : A.has(c) ? 'armor' : c === 'ACCESSORY' ? 'accessories' : E.has(c) ? 'equipment' : c === 'PET_ITEM' ? 'pet_items' : c === 'PET' ? 'pets' : 'misc';
 
   for (const h of fresh.items) {
     const existing = byId.get(h.id);
