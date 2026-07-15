@@ -2,9 +2,18 @@ appId: com.garrett.skyblockitembrowser
 productName: Skyblock Item Browser
 # reuse the electron dist npm already extracted (avoids EPERM during unpack on Windows)
 electronDist: node_modules/electron/dist
+# keep the standalone installer safely under GitHub's 100 MiB per-file limit
+compression: maximum
+# the UI is English-only; shipping all 58 Chromium locales costs ~47 MiB unpacked
+electronLanguages:
+  - en-US
 icon: build/icon.png
 directories:
   output: release
+# Vite/esbuild bundle everything the app needs into dist/ and dist-electron/,
+# so package.json `dependencies` stays empty (react lives in devDependencies) —
+# otherwise electron-builder would pack an unused node_modules copy of react
+# into app.asar.
 files:
   - dist/**
   - dist-electron/**

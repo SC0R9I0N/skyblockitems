@@ -10,6 +10,20 @@ search bar, crafting recipes, pets, and persistent favorites.
 glow · Minecraft-styled calculator (`+ - * /`, parentheses, `1.5e3` notation) · automatic
 level-100 pet stats per rarity · power stone sample stats at 1,000 Magical Power
 
+## Download & install (no tools required)
+
+**[⬇ Skyblock-Item-Browser-Setup.exe](https://github.com/SC0R9I0N/skyblockitems/raw/main/Skyblock-Item-Browser-Setup.exe)**
+— one self-contained file in the repo root; download just it, double-click, done.
+
+- Installs per-user (no admin prompt), creates a desktop shortcut, and launches the app when
+  finished. The app runtime, item dataset, and all textures are bundled inside — nothing else
+  to download or install first.
+- Windows SmartScreen may warn because the installer isn't signed with a commercial
+  certificate — click **More info → Run anyway**.
+- At runtime the app only contacts a fixed allowlist of HTTPS hosts (Hypixel API, the two
+  Skyblock wikis, mc-heads.net, raw.githubusercontent.com) to refresh item data and fetch the
+  few icons that aren't bundled; nothing is sent anywhere.
+
 ## Quick start
 
 ```bash
@@ -24,6 +38,8 @@ Build a standalone executable:
 ```bash
 npm run dist         # → release/Skyblock Item Browser Setup <version>.exe  (installer)
                      #   release/Skyblock Item Browser <version>.exe        (portable)
+                     #   Skyblock-Item-Browser-Setup.exe  (repo-root copy for the
+                     #   standalone download link above; keep it under 100 MiB)
 ```
 
 The app icon lives at `build/icon.png` (electron-builder converts it per-platform).

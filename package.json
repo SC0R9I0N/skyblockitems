@@ -11,12 +11,15 @@
     "data": "node scripts/fetch-data.mjs",
     "data:icons": "node scripts/fetch-data.mjs --icons",
     "data:scrape": "electron scripts/scrape-wiki-icons.cjs",
+    "data:pack": "node scripts/map-pack-textures.mjs",
     "dev": "node scripts/dev.mjs",
     "build": "node scripts/build.mjs",
     "dist": "node scripts/build.mjs --dist",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
     "@types/node": "^26.1.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
@@ -27,8 +30,5 @@
     "typescript": "^7.0.2",
     "vite": "^8.1.4"
   },
-  "dependencies": {
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7"
-  }
+  "dependencies": {}
 }
