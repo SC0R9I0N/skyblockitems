@@ -12,6 +12,7 @@
     "data:icons": "node scripts/fetch-data.mjs --icons",
     "data:scrape": "electron scripts/scrape-wiki-icons.cjs",
     "data:pack": "node scripts/map-pack-textures.mjs",
+    "data:dates": "node scripts/fetch-release-dates.mjs",
     "dev": "node scripts/dev.mjs",
     "build": "node scripts/build.mjs",
     "dist": "node scripts/build.mjs --dist",
