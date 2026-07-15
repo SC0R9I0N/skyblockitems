@@ -399,12 +399,13 @@ function normalizeIngredient(id) {
 }
 
 // Vanilla Minecraft items: Hypixel gives them ids identical to their Bukkit
-// material (optionally with a -N variant suffix); NEU also flags some.
+// material, optionally with a variant suffix — dash or colon (RED_ROSE:2 is
+// the vanilla Allium). NEU also flags some.
 function isVanillaItem(h, neu) {
   if (neu?.vanilla === true) return true;
   if (!h.material) return false;
   if (h.id === h.material) return true;
-  const m = h.id.match(/^(.+)-(\d+)$/);
+  const m = h.id.match(/^(.+)[-:](\d+)$/);
   return m != null && m[1] === h.material;
 }
 

@@ -358,11 +358,14 @@ app.whenReady().then(() => {
   protocol.handle('sbicon', async (req) => {
     try {
       const id = decodeURIComponent(new URL(req.url).pathname.replace(/^\//, ''));
-      if (!/^[A-Za-z0-9_.;-]+$/.test(id)) return new Response('bad id', { status: 400 });
+      // ':' appears in vanilla variant ids (RED_ROSE:2 = Allium)
+      if (!/^[A-Za-z0-9_.;:-]+$/.test(id)) return new Response('bad id', { status: 400 });
+      // ':' is illegal in Windows file names (NTFS stream separator)
+      const fileId = id.replace(/:/g, '=');
 
       // Bundled (possibly scraped/animated) icons win over everything.
       for (const ext of ['gif', 'png']) {
-        const bundled = path.join(dataDir(), 'icons', `${id}.${ext}`);
+        const bundled = path.join(dataDir(), 'icons', `${fileId}.${ext}`);
         if (fs.existsSync(bundled)) return net.fetch(`file://${bundled}`);
       }
 
@@ -374,14 +377,14 @@ app.whenReady().then(() => {
       // item's icon (e.g. paper -> wiki sprite) invalidates the old file.
       const urlHash = crypto.createHash('sha1').update(remote).digest('hex').slice(0, 8);
       for (const ext of ['gif', 'png']) {
-        const cachedIcon = path.join(iconCacheDir, `${id}.${urlHash}.${ext}`);
+        const cachedIcon = path.join(iconCacheDir, `${fileId}.${urlHash}.${ext}`);
         if (fs.existsSync(cachedIcon)) return net.fetch(`file://${cachedIcon}`);
       }
       const res = await net.fetch(remote);
       if (!res.ok) return new Response('fetch failed', { status: 404 });
       const buf = Buffer.from(await res.arrayBuffer());
       const ext = isGifBuf(buf) ? 'gif' : 'png';
-      fs.writeFile(path.join(iconCacheDir, `${id}.${urlHash}.${ext}`), buf, () => {});
+      fs.writeFile(path.join(iconCacheDir, `${fileId}.${urlHash}.${ext}`), buf, () => {});
       return new Response(buf, {
         headers: { 'content-type': ext === 'gif' ? 'image/gif' : 'image/png' },
       });
