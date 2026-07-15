@@ -12,7 +12,8 @@ data/items.json
 data/icons/
 
 # local tool settings
-.claude/settings.local.json
+.claude/
+CLAUDE.md
 
 # logs / OS noise
 *.log
