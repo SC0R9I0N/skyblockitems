@@ -259,6 +259,40 @@ body {
   font-size: 12px;
 }
 
+.sort-label {
+  font-size: 12px;
+  color: var(--text-soft);
+  align-self: center;
+}
+
+.mc-select {
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--btn-text);
+  background: var(--btn-bg);
+  border: 1px solid var(--btn-border);
+  border-radius: 10px;
+  padding: 7px 10px;
+  cursor: pointer;
+  outline: none;
+  transition: background-color 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.mc-select:hover {
+  background-color: var(--btn-hover);
+  color: var(--text-strong);
+}
+
+.mc-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-dim);
+}
+
+.mc-select option {
+  background: var(--surface-solid);
+  color: var(--text-body);
+}
+
 /* ------------------------------------------------------------------ grid */
 .main-row {
   position: relative;

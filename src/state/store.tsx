@@ -10,11 +10,28 @@ import {
 import type { AppSettings, Dataset, SkyblockItem, TabId } from '../types';
 import { stripMc } from '../mc/format';
 
+/** game rarity order, lowest first (unknown tiers sort last) */
+const TIER_ORDER: Record<string, number> = {
+  COMMON: 0,
+  UNCOMMON: 1,
+  RARE: 2,
+  EPIC: 3,
+  LEGENDARY: 4,
+  MYTHIC: 5,
+  DIVINE: 6,
+  SUPREME: 6, // pre-rename Divine
+  SPECIAL: 7,
+  VERY_SPECIAL: 8,
+  UNOBTAINABLE: 9,
+};
+
 const DEFAULT_SETTINGS: AppSettings = {
   darkMode: false,
   hideVanilla: false,
   showPetStats: true,
   showPowerStats: true,
+  sortKey: 'name',
+  sortAsc: true,
 };
 
 interface State {
@@ -173,17 +190,33 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const visibleItems = useMemo(() => {
     const q = state.query.trim().toLowerCase();
     const hideVanilla = state.settings.hideVanilla;
-    return state.items.filter((it) => {
+    // "New" = added during the CURRENT calendar year, evaluated at run time
+    const thisYear = String(new Date().getFullYear());
+    const filtered = state.items.filter((it) => {
       if (hideVanilla && it.isVanilla) return false;
       if (state.tab === 'favorites') {
         if (!state.favorites.has(it.id)) return false;
+      } else if (state.tab === 'new') {
+        if (it.addedAt?.slice(0, 4) !== thisYear) return false;
       } else if (state.tab !== 'all' && it.tab !== state.tab) {
         return false;
       }
       return !q || it.searchKey!.includes(q);
     });
+
+    const { sortKey, sortAsc } = state.settings;
+    const byName = (a: SkyblockItem, b: SkyblockItem) => a.name.localeCompare(b.name);
+    let cmp: (a: SkyblockItem, b: SkyblockItem) => number;
+    if (sortKey === 'rarity')
+      cmp = (a, b) => (TIER_ORDER[a.tier] ?? 99) - (TIER_ORDER[b.tier] ?? 99) || byName(a, b);
+    else if (sortKey === 'release')
+      cmp = (a, b) =>
+        (a.addedAt ?? '0000').localeCompare(b.addedAt ?? '0000') || byName(a, b);
+    else cmp = byName; // 'name' + any legacy persisted value
+    filtered.sort(sortAsc ? cmp : (a, b) => cmp(b, a));
+    return filtered;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- favKey stands in for state.favorites
-  }, [state.items, state.tab, state.query, favKey, state.settings.hideVanilla]);
+  }, [state.items, state.tab, state.query, favKey, state.settings.hideVanilla, state.settings.sortKey, state.settings.sortAsc]);
 
   const selected = state.selectedId ? state.byId.get(state.selectedId) ?? null : null;
 

@@ -1,5 +1,6 @@
 export type TabId =
   | 'all'
+  | 'new'
   | 'weapons'
   | 'armor'
   | 'equipment'
@@ -44,18 +45,22 @@ export interface PetStatsEntry {
   other: number[]; // ability numbers filling {0}..{n} lore placeholders
 }
 
+export type SortKey = 'name' | 'rarity' | 'release';
+
 export interface AppSettings {
   darkMode: boolean;
   hideVanilla: boolean;
   showPetStats: boolean;
   showPowerStats: boolean;
+  sortKey: SortKey;
+  sortAsc: boolean;
 }
 
 export interface SkyblockItem {
   id: string;
   name: string;
   category: string;
-  tab: Exclude<TabId, 'all' | 'favorites'>;
+  tab: Exclude<TabId, 'all' | 'favorites' | 'new'>;
   tier: string;
   lore: string[];
   stats?: Record<string, number>;
@@ -71,6 +76,8 @@ export interface SkyblockItem {
   usedIn?: string[];
   petInfo?: { type: string; rarities: string[] };
   isVanilla?: boolean;
+  /** ISO date (YYYY-MM-DD) the item was first seen in the game's data */
+  addedAt?: string;
   powerStone?: PowerStoneInfo;
   petStats?: Record<string, PetStatsEntry>;
   /** precomputed lowercase search key (added client-side) */

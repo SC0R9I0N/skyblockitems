@@ -783,6 +783,34 @@ for (const [internal, json] of neuItems) {
 }
 console.log(`      ${dyeCount} dyes`);
 
+// First-seen ledger driving the "New" tab: ids the pipeline has never seen
+// before get today's date. Seed the ledger once with
+// scripts/seed-item-dates.mjs (it reconstructs this year's additions from
+// NEU git history); without it, no dates are stamped.
+console.log('[4.6/8] item added-dates...');
+{
+  const DATES_FILE = path.join(OUT_DIR, 'item-dates.json');
+  let ledger = null;
+  try {
+    ledger = JSON.parse(fs.readFileSync(DATES_FILE, 'utf8'));
+  } catch {
+    console.log('      no data/item-dates.json — run scripts/seed-item-dates.mjs once to enable the New tab');
+  }
+  if (ledger) {
+    const today = new Date().toISOString().slice(0, 10);
+    let freshIds = 0;
+    for (const it of items) {
+      if (!ledger[it.id]) {
+        ledger[it.id] = today;
+        freshIds++;
+      }
+      it.addedAt = ledger[it.id];
+    }
+    fs.writeFileSync(DATES_FILE, JSON.stringify(ledger, null, 1));
+    console.log(`      ${freshIds} first-seen today; ${Object.keys(ledger).length} ids tracked`);
+  }
+}
+
 console.log('[5/8] wiki item sprites (paper/missing icons)...');
 {
   const needsIcon = (it) =>

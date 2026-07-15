@@ -124,6 +124,7 @@ async function refreshDataset(): Promise<string> {
         npcSellPrice: h.npc_sell_price,
         icon,
         sources: [],
+        addedAt: new Date().toISOString().slice(0, 10), // first seen now → "New" tab
       });
     }
   }
@@ -159,11 +160,16 @@ const DEFAULT_SETTINGS = {
   hideVanilla: false,
   showPetStats: true,
   showPowerStats: true,
+  sortKey: 'name',
+  sortAsc: true,
 };
 
 function readSettings(): typeof DEFAULT_SETTINGS {
   try {
-    return { ...DEFAULT_SETTINGS, ...JSON.parse(fs.readFileSync(userFile('settings.json'), 'utf8')) };
+    const merged = { ...DEFAULT_SETTINGS, ...JSON.parse(fs.readFileSync(userFile('settings.json'), 'utf8')) };
+    // migrate the short-lived 'none' sort option away
+    if (!['name', 'rarity', 'release'].includes(merged.sortKey)) merged.sortKey = 'name';
+    return merged;
   } catch {
     return { ...DEFAULT_SETTINGS };
   }

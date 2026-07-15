@@ -4,7 +4,7 @@ import { TabBar } from './components/TabBar';
 import { ItemGrid } from './components/ItemGrid';
 import { SearchBar } from './components/SearchBar';
 import { DetailPanel } from './components/DetailPanel';
-import type { TabId } from './types';
+import type { SortKey, TabId } from './types';
 
 export default function App() {
   const store = useStore();
@@ -14,8 +14,12 @@ export default function App() {
     const pool = store.settings.hideVanilla
       ? store.items.filter((it) => !it.isVanilla)
       : store.items;
-    const c: Partial<Record<TabId, number>> = { all: pool.length };
-    for (const it of pool) c[it.tab] = (c[it.tab] ?? 0) + 1;
+    const c: Partial<Record<TabId, number>> = { all: pool.length, new: 0 };
+    const thisYear = String(new Date().getFullYear());
+    for (const it of pool) {
+      c[it.tab] = (c[it.tab] ?? 0) + 1;
+      if (it.addedAt?.slice(0, 4) === thisYear) c.new!++;
+    }
     c.favorites = store.favorites.size;
     return c;
   }, [store.items, store.favorites, store.settings.hideVanilla]);
@@ -44,6 +48,27 @@ export default function App() {
     <div className="app">
       <div className="top-bar">
         <div className="toolbar">
+          <label className="sort-label" htmlFor="sort-select">
+            Sort
+          </label>
+          <select
+            id="sort-select"
+            className="mc-select"
+            title="Sort the item grid"
+            value={store.settings.sortKey}
+            onChange={(e) => store.updateSettings({ sortKey: e.target.value as SortKey })}
+          >
+            <option value="name">A-Z</option>
+            <option value="rarity">Rarity</option>
+            <option value="release">Release date</option>
+          </select>
+          <button
+            className="mc-btn"
+            title={store.settings.sortAsc ? 'Ascending — click for descending' : 'Descending — click for ascending'}
+            onClick={() => store.updateSettings({ sortAsc: !store.settings.sortAsc })}
+          >
+            {store.settings.sortAsc ? '▲' : '▼'}
+          </button>
           <button
             className={`mc-btn${store.settings.darkMode ? ' active' : ''}`}
             title="Toggle dark mode"
