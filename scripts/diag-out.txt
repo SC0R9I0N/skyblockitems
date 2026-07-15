@@ -1,0 +1,2 @@
+HARD TIMEOUT — exiting
+FATAL: Error: target closed while handling command

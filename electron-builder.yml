@@ -1,0 +1,34 @@
+appId: com.garrett.skyblockitembrowser
+productName: Skyblock Item Browser
+# reuse the electron dist npm already extracted (avoids EPERM during unpack on Windows)
+electronDist: node_modules/electron/dist
+icon: build/icon.png
+directories:
+  output: release
+files:
+  - dist/**
+  - dist-electron/**
+  - package.json
+extraResources:
+  - from: data
+    to: data
+    filter:
+      - items.json
+      - icons/**
+win:
+  target:
+    - nsis
+    - portable
+# One-click installer: double-click → installs per-user (no admin prompt,
+# no wizard) → launches the app automatically when done.
+nsis:
+  oneClick: true
+  perMachine: false
+  runAfterFinish: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Skyblock Item Browser
+mac:
+  target: dmg
+linux:
+  target: AppImage

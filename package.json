@@ -1,0 +1,34 @@
+{
+  "name": "skyblock-item-browser",
+  "productName": "Skyblock Item Browser",
+  "version": "1.0.0",
+  "description": "Minecraft-styled Hypixel Skyblock item browser (Electron + React)",
+  "author": "Garrett",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist-electron/main.cjs",
+  "scripts": {
+    "data": "node scripts/fetch-data.mjs",
+    "data:icons": "node scripts/fetch-data.mjs --icons",
+    "data:scrape": "electron scripts/scrape-wiki-icons.cjs",
+    "dev": "node scripts/dev.mjs",
+    "build": "node scripts/build.mjs",
+    "dist": "node scripts/build.mjs --dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.3",
+    "electron": "^43.1.0",
+    "electron-builder": "^26.15.3",
+    "esbuild": "^0.28.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.1.4"
+  },
+  "dependencies": {
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  }
+}
