@@ -1,0 +1,677 @@
+/* ------------------------------------------------------------------ base */
+@font-face {
+  font-family: 'Monocraft';
+  src: url('../fonts/Monocraft.ttf') format('truetype');
+  font-display: swap;
+}
+
+/* Light theme: Minecraft's classic gray GUI, refined. Dark overrides below. */
+:root {
+  --mc-panel: #c6c6c6;
+  --mc-panel-light: #e9e9e9;
+  --mc-panel-dark: #6f6f6f;
+  --mc-slot: #8b8b8b;
+  --mc-slot-dark: #414141;
+  --mc-slot-light: #e6e6e6;
+  --mc-text: #3f3f3f;
+  --text-strong: #2c2c2c;
+  --text-body: #383838;
+  --text-soft: #5f5f5f;
+  --divider: #ababab;
+  --row-divider: #b4b4b4;
+  --btn-bg: #6d6d72;
+  --btn-text: #e8e8e8;
+  --btn-hover: #7c7c82;
+  --btn-active-bg: #4f4f38;
+  --input-bg: rgba(8, 8, 10, 0.92);
+  --input-border: #86868c;
+  --tooltip-bg: rgba(14, 2, 18, 0.95);
+  --tooltip-border-a: #5000ff;
+  --tooltip-border-b: #28007f;
+  --app-bg: #202024;
+  --app-glow: #2a2a30;
+  --chip-bg: #2c2c30;
+  --chip-text: #dcdcdc;
+  --chip-border: #55555c;
+  --table-val-bg: rgba(0, 0, 0, 0.14);
+  --slot-hover: rgba(255, 255, 255, 0.35);
+  --accent: #ffd75e;
+  --accent-dim: rgba(255, 215, 94, 0.45);
+  --shadow-panel: 0 4px 18px rgba(0, 0, 0, 0.28);
+  --rarity-mix-dark: 45%;
+  --rarity-mix-light: 40%;
+}
+
+html.dark {
+  --mc-panel: #29292d;
+  --mc-panel-light: #45454c;
+  --mc-panel-dark: #121215;
+  --mc-slot: #35353a;
+  --mc-slot-dark: #17171a;
+  --mc-slot-light: #55555e;
+  --mc-text: #c9c9c9;
+  --text-strong: #e6e6e6;
+  --text-body: #cfcfcf;
+  --text-soft: #94949c;
+  --divider: #45454c;
+  --row-divider: #3a3a40;
+  --btn-bg: #38383e;
+  --btn-text: #dcdcdc;
+  --btn-hover: #46464e;
+  --btn-active-bg: #45412a;
+  --input-bg: rgba(5, 5, 8, 0.92);
+  --input-border: #4c4c54;
+  --tooltip-bg: rgba(7, 0, 12, 0.96);
+  --tooltip-border-a: #3f00c8;
+  --tooltip-border-b: #1c0060;
+  --app-bg: #141417;
+  --app-glow: #1d1d22;
+  --chip-bg: #1d1d21;
+  --chip-text: #cccccc;
+  --chip-border: #3f3f46;
+  --table-val-bg: rgba(0, 0, 0, 0.28);
+  --slot-hover: rgba(255, 255, 255, 0.18);
+  --shadow-panel: 0 4px 20px rgba(0, 0, 0, 0.5);
+  /* dark mode: rarity borders lean brighter so they stay readable */
+  --rarity-mix-dark: 70%;
+  --rarity-mix-light: 60%;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'Monocraft', 'Segoe UI', monospace;
+  font-size: 14px;
+  color: #fff;
+  background: radial-gradient(120% 90% at 50% -20%, var(--app-glow), var(--app-bg) 70%);
+  image-rendering: pixelated;
+}
+
+.app {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 12px;
+  gap: 10px;
+}
+
+.mc-shadow {
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5);
+}
+
+.muted {
+  color: var(--text-soft);
+  font-size: 13px;
+}
+
+/* ------------------------------------------------------------- mc panels */
+.mc-panel {
+  background: var(--mc-panel);
+  border: 2px solid;
+  border-color: var(--mc-panel-light) var(--mc-panel-dark) var(--mc-panel-dark)
+    var(--mc-panel-light);
+  outline: 1px solid rgba(0, 0, 0, 0.55);
+  box-shadow: var(--shadow-panel);
+  color: var(--mc-text);
+}
+
+.mc-panel-inset {
+  background: var(--mc-panel);
+  border: 2px solid;
+  border-color: var(--mc-panel-dark) var(--mc-panel-light) var(--mc-panel-light)
+    var(--mc-panel-dark);
+  outline: 1px solid rgba(0, 0, 0, 0.55);
+  box-shadow: var(--shadow-panel), inset 0 2px 10px rgba(0, 0, 0, 0.14);
+  padding: 4px;
+}
+
+/* --------------------------------------------------------------- buttons */
+.mc-btn {
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--btn-text);
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.45);
+  background: var(--btn-bg) linear-gradient(rgba(255, 255, 255, 0.14), rgba(0, 0, 0, 0.1));
+  border: 1px solid rgba(0, 0, 0, 0.8);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.22),
+    0 1px 2px rgba(0, 0, 0, 0.3);
+  padding: 7px 13px 6px;
+  cursor: pointer;
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease,
+    box-shadow 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.mc-btn:hover:not(:disabled) {
+  background-color: var(--btn-hover);
+  color: #ffffff;
+  border-color: rgba(0, 0, 0, 0.9);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.22),
+    0 0 0 1px var(--accent-dim),
+    0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+.mc-btn:disabled {
+  color: #9d9d9d;
+  cursor: default;
+}
+
+.mc-btn.active {
+  background-color: var(--btn-active-bg);
+  background-image: none;
+  color: var(--accent);
+  box-shadow:
+    inset 0 2px 3px rgba(0, 0, 0, 0.4),
+    inset 0 -2px 0 var(--accent-dim);
+}
+
+/* ------------------------------------------------------------------ tabs */
+.tab-bar {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.tab-count {
+  margin-left: 8px;
+  font-size: 11px;
+  color: inherit;
+  opacity: 0.55;
+}
+
+.toolbar {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+}
+
+.toolbar .mc-btn {
+  padding: 6px 10px 5px;
+  font-size: 12px;
+}
+
+/* ------------------------------------------------------------------ grid */
+.main-row {
+  position: relative;
+  display: flex;
+  flex: 1;
+  gap: 10px;
+  min-height: 0;
+}
+
+.grid-outer {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+}
+
+.grid-scroll {
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+}
+
+.grid-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--text-soft);
+  font-size: 17px;
+}
+
+.mc-slot {
+  width: 54px;
+  height: 54px;
+  background: var(--mc-slot);
+  border: 3px solid;
+  border-color: var(--mc-slot-dark) var(--mc-slot-light) var(--mc-slot-light)
+    var(--mc-slot-dark);
+  display: grid;
+  place-items: center;
+  position: relative;
+  cursor: pointer;
+  transition: box-shadow 0.12s ease;
+}
+
+/* Rarity-colored slot borders: bevel mixed from the rarity color, with a
+   soft glow on hover. --rarity is set inline per slot; the mix percentages
+   change under html.dark so borders stay bright on dark slots. */
+.mc-slot.rar {
+  border-color: color-mix(in srgb, var(--rarity) var(--rarity-mix-dark), #1a1a1a)
+    color-mix(in srgb, var(--rarity) var(--rarity-mix-light), #ffffff)
+    color-mix(in srgb, var(--rarity) var(--rarity-mix-light), #ffffff)
+    color-mix(in srgb, var(--rarity) var(--rarity-mix-dark), #1a1a1a);
+}
+
+.mc-slot.rar:hover {
+  box-shadow: 0 0 8px 1px color-mix(in srgb, var(--rarity) 75%, transparent);
+  z-index: 2;
+}
+
+.mc-slot:hover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--slot-hover);
+  pointer-events: none;
+}
+
+.mc-slot.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-dim), 0 0 10px 1px var(--accent-dim);
+  z-index: 1;
+}
+
+.mc-slot.small {
+  width: 42px;
+  height: 42px;
+  cursor: default;
+}
+
+.mc-slot.small.clickable,
+.chip.clickable {
+  cursor: pointer;
+}
+
+.mc-slot.big {
+  width: 72px;
+  height: 72px;
+  cursor: default;
+}
+
+.fav-star {
+  position: absolute;
+  top: -1px;
+  right: 2px;
+  font-size: 12px;
+  color: var(--accent);
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+.slot-count {
+  position: absolute;
+  right: 2px;
+  bottom: 0;
+  font-size: 13px;
+  color: #fff;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+}
+
+/* ----------------------------------------------------------------- icons */
+.icon-wrap {
+  position: relative;
+  display: inline-block;
+  isolation: isolate;
+}
+
+.icon-wrap img {
+  display: block;
+}
+
+.icon-tint {
+  position: absolute;
+  inset: 0;
+  mix-blend-mode: multiply;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  pointer-events: none;
+}
+
+.icon-placeholder {
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px dashed rgba(255, 255, 255, 0.25);
+  color: #fff;
+  font-weight: 700;
+}
+
+/* --------------------------------------------------------------- tooltip */
+.mc-tooltip {
+  position: fixed;
+  z-index: 100;
+  max-width: 340px;
+  padding: 8px 12px;
+  background: var(--tooltip-bg);
+  border: 2px solid transparent;
+  border-image: linear-gradient(var(--tooltip-border-a), var(--tooltip-border-b)) 1;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.mc-tooltip-title {
+  font-size: 14px;
+  margin-bottom: 3px;
+}
+
+.mc-tooltip-line {
+  white-space: pre-wrap;
+  min-height: 18px;
+}
+
+/* ---------------------------------------------------------------- search */
+.search-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mc-input {
+  flex: 1;
+  font-family: inherit;
+  font-size: 15px;
+  color: #fff;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.45);
+  padding: 9px 12px;
+  outline: none;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.mc-input::placeholder {
+  color: #77777f;
+}
+
+.mc-input:focus {
+  border-color: var(--accent);
+  box-shadow:
+    inset 0 1px 4px rgba(0, 0, 0, 0.45),
+    0 0 0 1px var(--accent-dim);
+}
+
+.search-count {
+  color: #cfcfd4;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------- detail panel */
+.detail {
+  width: 380px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: relative;
+}
+
+/* the panel itself scrolls; don't let sections squash */
+.detail > * {
+  flex-shrink: 0;
+}
+
+.close-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 3px 8px;
+  font-size: 11px;
+}
+
+.detail-head {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding-right: 30px;
+}
+
+.detail-name {
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.detail-sub {
+  font-size: 12px;
+  color: var(--text-soft);
+  margin-top: 5px;
+}
+
+.fav-btn {
+  width: 100%;
+}
+
+.fav-btn.active {
+  color: var(--accent);
+}
+
+.section-title {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--text-soft);
+  border-bottom: 1px solid var(--divider);
+  padding-bottom: 5px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.section-toggle {
+  font-family: inherit;
+  font-size: 10px;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  background: var(--chip-bg);
+  color: var(--chip-text);
+  border: 1px solid var(--chip-border);
+  padding: 2px 7px;
+  cursor: pointer;
+  transition: border-color 0.12s ease, color 0.12s ease;
+}
+
+.section-toggle:hover {
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.lore-box,
+.stat-panel {
+  background: var(--tooltip-bg);
+  border: 2px solid transparent;
+  border-image: linear-gradient(var(--tooltip-border-a), var(--tooltip-border-b)) 1;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  padding: 9px 12px;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.lore-box {
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.stat-panel table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.stat-panel td {
+  padding: 2px 4px;
+  color: #aaaaaa;
+}
+
+.stat-panel td:last-child {
+  text-align: right;
+}
+
+.stat-panel .panel-note {
+  color: #6b6b95;
+  font-size: 11px;
+  margin-top: 6px;
+}
+
+.source-list {
+  list-style: none;
+  font-size: 13px;
+  color: var(--text-body);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  line-height: 1.4;
+}
+
+.source-list li::before {
+  content: '• ';
+  color: var(--text-soft);
+}
+
+.source-attribution {
+  margin-top: 5px;
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 4px 0;
+}
+
+.chip {
+  font-family: inherit;
+  font-size: 12px;
+  background: var(--chip-bg);
+  color: var(--chip-text);
+  border: 1px solid var(--chip-border);
+  padding: 3px 9px;
+  transition: border-color 0.12s ease, color 0.12s ease, background-color 0.12s ease;
+}
+
+.chip.clickable:hover {
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.chip.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-dim);
+}
+
+.stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.stats-table td {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--row-divider);
+  color: var(--text-body);
+}
+
+.stats-table td:last-child {
+  text-align: right;
+  background: var(--table-val-bg);
+}
+
+.wiki-text {
+  font-size: 13px;
+  color: var(--text-body);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  user-select: text;
+}
+
+.detail-id {
+  font-size: 10px;
+  text-align: right;
+  opacity: 0.7;
+}
+
+/* -------------------------------------------------------------- crafting */
+.crafting {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.crafting-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 42px);
+}
+
+.crafting-arrow {
+  font-size: 22px;
+  color: var(--text-soft);
+}
+
+.mc-slot.result {
+  width: 50px;
+  height: 50px;
+}
+
+/* ------------------------------------------- inline search-bar calculator */
+.search-calc {
+  color: #55ff55;
+  white-space: nowrap;
+  font-size: 15px;
+}
+
+/* ---------------------------------------------------------------- splash */
+.splash {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  position: relative;
+}
+
+.splash-text {
+  font-size: 24px;
+}
+
+/* ------------------------------------------------------------- scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--mc-panel-dark);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--text-soft);
+  background-clip: padding-box;
+}

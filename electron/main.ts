@@ -91,10 +91,12 @@ async function refreshDataset(): Promise<string> {
   const tabFor = (c: string, id = '') =>
     c === 'COSMETIC' || id.startsWith('DYE_') ? 'cosmetics' : W.has(c) ? 'weapons' : A.has(c) ? 'armor' : c === 'ACCESSORY' ? 'accessories' : E.has(c) ? 'equipment' : c === 'PET_ITEM' ? 'pet_items' : c === 'PET' ? 'pets' : 'misc';
 
+  // some API names carry %%color%% templating (e.g. "%%red%%Volcanic Rock")
+  const cleanName = (n?: string) => n?.replace(/%%[a-z_]+%%/g, '').trim();
   for (const h of fresh.items) {
     const existing = byId.get(h.id);
     if (existing) {
-      existing.name = h.name ?? existing.name;
+      existing.name = cleanName(h.name) ?? existing.name;
       existing.tier = h.tier ?? existing.tier;
       existing.stats = h.stats && Object.keys(h.stats).length ? h.stats : existing.stats;
       existing.npcSellPrice = h.npc_sell_price ?? existing.npcSellPrice;
@@ -113,7 +115,7 @@ async function refreshDataset(): Promise<string> {
       }
       dataset.items.push({
         id: h.id,
-        name: h.name ?? h.id,
+        name: cleanName(h.name) ?? h.id,
         category: h.category ?? 'NONE',
         tab: tabFor(h.category ?? 'NONE', h.id),
         tier: h.tier ?? 'COMMON',

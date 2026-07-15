@@ -1,4 +1,4 @@
-import type { AppSettings, TabId } from '../types';
+import type { TabId } from '../types';
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'all', label: 'All Items' },
@@ -16,40 +16,23 @@ const TABS: { id: TabId; label: string }[] = [
 interface Props {
   tab: TabId;
   counts: Partial<Record<TabId, number>>;
-  settings: AppSettings;
   onChange: (tab: TabId) => void;
-  onUpdateSettings: (patch: Partial<AppSettings>) => void;
 }
 
-export function TabBar({ tab, counts, settings, onChange, onUpdateSettings }: Props) {
+/** Vertical category rail on the left side of the window. */
+export function TabBar({ tab, counts, onChange }: Props) {
   return (
-    <div className="tab-bar">
+    <nav className="tab-bar">
       {TABS.map((t) => (
         <button
           key={t.id}
           className={`mc-btn${tab === t.id ? ' active' : ''}`}
           onClick={() => onChange(t.id)}
         >
-          {t.label}
+          <span>{t.label}</span>
           {counts[t.id] != null && <span className="tab-count">{counts[t.id]}</span>}
         </button>
       ))}
-      <div className="toolbar">
-        <button
-          className={`mc-btn${settings.darkMode ? ' active' : ''}`}
-          title="Toggle dark mode"
-          onClick={() => onUpdateSettings({ darkMode: !settings.darkMode })}
-        >
-          {settings.darkMode ? '☀ Light' : '🌙 Dark'}
-        </button>
-        <button
-          className={`mc-btn${settings.hideVanilla ? ' active' : ''}`}
-          title="Hide vanilla Minecraft items"
-          onClick={() => onUpdateSettings({ hideVanilla: !settings.hideVanilla })}
-        >
-          Hide Vanilla
-        </button>
-      </div>
-    </div>
+    </nav>
   );
 }

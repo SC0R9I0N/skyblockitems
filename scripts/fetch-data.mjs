@@ -706,7 +706,8 @@ for (const h of hypixel.items) {
   }
   const item = {
     id: h.id,
-    name: h.name ?? stripCodes(neu?.displayname) ?? titleCase(h.id),
+    // some API names carry %%color%% templating (e.g. "%%red%%Volcanic Rock")
+    name: (h.name ?? stripCodes(neu?.displayname) ?? titleCase(h.id)).replace(/%%[a-z_]+%%/g, '').trim(),
     category: h.category ?? 'NONE',
     tab: tabFor(h.category ?? 'NONE', h.id),
     tier: h.tier ?? 'COMMON',

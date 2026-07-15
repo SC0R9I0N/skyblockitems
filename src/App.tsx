@@ -42,14 +42,26 @@ export default function App() {
 
   return (
     <div className="app">
-      <TabBar
-        tab={store.tab}
-        counts={counts}
-        settings={store.settings}
-        onChange={store.setTab}
-        onUpdateSettings={store.updateSettings}
-      />
+      <div className="top-bar">
+        <div className="toolbar">
+          <button
+            className={`mc-btn${store.settings.darkMode ? ' active' : ''}`}
+            title="Toggle dark mode"
+            onClick={() => store.updateSettings({ darkMode: !store.settings.darkMode })}
+          >
+            {store.settings.darkMode ? '☀ Light' : '🌙 Dark'}
+          </button>
+          <button
+            className={`mc-btn${store.settings.hideVanilla ? ' active' : ''}`}
+            title="Hide vanilla Minecraft items"
+            onClick={() => store.updateSettings({ hideVanilla: !store.settings.hideVanilla })}
+          >
+            Hide Vanilla
+          </button>
+        </div>
+      </div>
       <div className="main-row">
+        <TabBar tab={store.tab} counts={counts} onChange={store.setTab} />
         <ItemGrid
           items={deferredItems}
           selectedId={store.selectedId}

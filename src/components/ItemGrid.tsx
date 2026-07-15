@@ -11,7 +11,7 @@ import { ItemIcon } from './ItemIcon';
 import { Tooltip } from './Tooltip';
 import { rarityBorder } from '../mc/format';
 
-const CELL = 54; // 18px Minecraft slot at 3x scale
+const CELL = 58; // 54px slot + 4px gutter (modern theme; classic slots packed at 54)
 
 interface SlotProps {
   item: SkyblockItem;
@@ -132,7 +132,7 @@ export function ItemGrid({ items, selectedId, favorites, onSelect, onToggleFavor
         <div style={{ position: 'relative', height: rows * CELL + 16 }}>{slots}</div>
         {items.length === 0 && <div className="grid-empty">No items found</div>}
       </div>
-      {hover && <Tooltip item={hover.item} x={hover.x} y={hover.y} />}
+      {hover && <Tooltip item={hover.item} x={hover.x} y={hover.y} host={ref.current} />}
     </div>
   );
 }
