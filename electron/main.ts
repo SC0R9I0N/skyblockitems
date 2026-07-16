@@ -354,6 +354,7 @@ function savePriceCacheSoon() {
 const priceFetch = (url: string) =>
   net.fetch(url, {
     headers: { 'user-agent': 'skyblock-item-browser' },
+    credentials: 'omit',
     signal: AbortSignal.timeout(10_000),
   });
 
@@ -363,7 +364,9 @@ const priceJson = (url: string) =>
     .catch(() => null) as Promise<any>;
 
 async function fetchPrice(id: string, rarity?: string): Promise<PriceInfo | null> {
-  if (!/^[A-Za-z0-9_.;:-]+$/.test(id)) return null;
+  // '..' would let a URL path segment escape /api/item/price/ (same host, but
+  // no reason to allow it); real ids never contain consecutive dots
+  if (!/^[A-Za-z0-9_.;:-]+$/.test(id) || id.includes('..')) return null;
   if (rarity !== undefined && !/^[A-Z_]+$/.test(rarity)) return null;
   const key = rarity ? `${id}@${rarity}` : id;
   const cached = priceCache[key];
