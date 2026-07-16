@@ -9,6 +9,14 @@ const api = {
     id: string,
     urls: string[],
   ): Promise<{ url: string; text: string } | null> => ipcRenderer.invoke('wiki:extract', id, urls),
+  getPrice: (
+    id: string,
+    rarity?: string,
+  ): Promise<
+    | { kind: 'ah'; lowestBin: number | null; avg3d: number | null; sales3d: number }
+    | { kind: 'bazaar'; buy: number; sell: number }
+    | null
+  > => ipcRenderer.invoke('price:get', id, rarity),
   openExternal: (url: string): Promise<void> => ipcRenderer.invoke('shell:openExternal', url),
   getSettings: (): Promise<Record<string, boolean>> => ipcRenderer.invoke('settings:get'),
   patchSettings: (patch: Record<string, boolean>): Promise<Record<string, boolean>> =>

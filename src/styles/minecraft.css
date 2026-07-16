@@ -722,6 +722,106 @@ body {
   background: var(--table-val);
 }
 
+/* --------------------------------------------------------- market prices */
+.price-panel {
+  background: var(--dark-card-bg);
+  border: 1px solid var(--dark-card-border);
+  border-left: 4px solid #ffaa00;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+  padding: 11px 14px;
+}
+
+.price-panel .muted {
+  color: #8b8d97;
+}
+
+.price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 4px 0;
+}
+
+.price-label {
+  color: #c9cad2;
+  font-size: 13px;
+}
+
+.coin-value {
+  color: #ffaa00;
+  font-size: 18px;
+  font-weight: 700;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
+}
+
+.coin-value::after {
+  content: ' coins';
+  font-size: 11px;
+  font-weight: 400;
+  color: #c9a44a;
+}
+
+.price-note {
+  padding-top: 2px;
+  font-size: 12px;
+}
+
+.price-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.price-table th {
+  text-align: right;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  color: #9a9ca6;
+  padding: 2px 8px 6px;
+}
+
+.price-table td {
+  padding: 4px 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  color: #c9cad2;
+}
+
+.price-table td:first-child,
+.price-table th:first-child {
+  text-align: left;
+  padding-left: 0;
+}
+
+.price-table td:not(:first-child) {
+  text-align: right;
+}
+
+.price-table .coin-value {
+  font-size: 14px;
+}
+
+/* the panel is a dark card in both themes, so pin readable colors instead of
+   inheriting theme-relative chip/muted ones */
+.price-attribution {
+  margin-top: 8px;
+  padding-top: 7px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  font-size: 12px;
+  color: #9a9ca6;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.price-attribution .chip {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #c9cad2;
+}
+
 .wiki-text {
   font-size: 13px;
   color: var(--text-body);

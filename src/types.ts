@@ -45,6 +45,11 @@ export interface PetStatsEntry {
   other: number[]; // ability numbers filling {0}..{n} lore placeholders
 }
 
+/** live market data from the Coflnet API, resolved in the main process */
+export type PriceInfo =
+  | { kind: 'ah'; lowestBin: number | null; avg3d: number | null; sales3d: number }
+  | { kind: 'bazaar'; buy: number; sell: number };
+
 export type SortKey = 'name' | 'rarity' | 'release';
 
 export interface AppSettings {
@@ -97,6 +102,7 @@ declare global {
       getFavorites: () => Promise<string[]>;
       toggleFavorite: (id: string) => Promise<string[]>;
       wikiExtract: (id: string, urls: string[]) => Promise<{ url: string; text: string } | null>;
+      getPrice: (id: string, rarity?: string) => Promise<PriceInfo | null>;
       openExternal: (url: string) => Promise<void>;
       getSettings: () => Promise<AppSettings>;
       patchSettings: (patch: Partial<AppSettings>) => Promise<AppSettings>;

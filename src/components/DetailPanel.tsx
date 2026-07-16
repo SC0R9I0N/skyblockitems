@@ -5,6 +5,7 @@ import { ItemIcon } from './ItemIcon';
 import { CraftingGrid } from './CraftingGrid';
 import { PetStatsPanel } from './PetStatsPanel';
 import { PowerStonePanel } from './PowerStonePanel';
+import { PricePanel } from './PricePanel';
 
 interface Props {
   item: SkyblockItem;
@@ -99,6 +100,8 @@ export function DetailPanel({ item, byId, favorited, onToggleFavorite, onSelect,
           ))}
         </section>
       )}
+
+      <PricePanel key={`price-${item.id}`} item={item} />
 
       <section>
         <h3 className="section-title">Where it comes from</h3>

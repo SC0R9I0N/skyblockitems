@@ -63,6 +63,8 @@ const ALLOWED_ICON_HOSTS = new Set([
   'hypixelskyblock.minecraft.wiki',
   'wiki.hypixel.net',
 ]);
+// hosts the renderer may open in the system browser (wikis + price attribution)
+const ALLOWED_LINK_HOSTS = new Set([...ALLOWED_WIKI_HOSTS, 'sky.coflnet.com']);
 
 function hostAllowed(url: string, allowed: Set<string>): boolean {
   try {
@@ -322,6 +324,93 @@ async function fetchWikiExtract(id: string, urls: string[]): Promise<WikiEntry |
   return null;
 }
 
+// ------------------------------------------------------------- market prices
+
+// Live auction/bazaar prices come from the community Coflnet API
+// (sky.coflnet.com). Only a validated item id and rarity ever go into the
+// URL, and responses are reduced to plain numbers before reaching the
+// renderer, which itself has no network access.
+const PRICE_API = 'https://sky.coflnet.com/api/item/price';
+const PRICE_TTL_MS = 10 * 60_000;
+
+type PriceInfo =
+  | { kind: 'ah'; lowestBin: number | null; avg3d: number | null; sales3d: number }
+  | { kind: 'bazaar'; buy: number; sell: number };
+type PriceEntry = { fetchedAt: number; info: PriceInfo | null };
+
+let priceCache: Record<string, PriceEntry> = {};
+try {
+  priceCache = JSON.parse(fs.readFileSync(userFile('priceCache.json'), 'utf8'));
+} catch {}
+let priceSaveTimer: NodeJS.Timeout | null = null;
+
+function savePriceCacheSoon() {
+  if (priceSaveTimer) clearTimeout(priceSaveTimer);
+  priceSaveTimer = setTimeout(() => {
+    fs.writeFile(userFile('priceCache.json'), JSON.stringify(priceCache), () => {});
+  }, 2000);
+}
+
+const priceFetch = (url: string) =>
+  net.fetch(url, {
+    headers: { 'user-agent': 'skyblock-item-browser' },
+    signal: AbortSignal.timeout(10_000),
+  });
+
+const priceJson = (url: string) =>
+  priceFetch(url)
+    .then((r) => (r.ok ? r.json() : null))
+    .catch(() => null) as Promise<any>;
+
+async function fetchPrice(id: string, rarity?: string): Promise<PriceInfo | null> {
+  if (!/^[A-Za-z0-9_.;:-]+$/.test(id)) return null;
+  if (rarity !== undefined && !/^[A-Z_]+$/.test(rarity)) return null;
+  const key = rarity ? `${id}@${rarity}` : id;
+  const cached = priceCache[key];
+  if (cached && Date.now() - cached.fetchedAt < PRICE_TTL_MS) return cached.info;
+
+  const base = `${PRICE_API}/${encodeURIComponent(id)}`;
+  const q = rarity ? `?Rarity=${rarity}` : '';
+  const current = await priceJson(`${base}/current${q}`);
+  // untradeable/unknown items come back as zeros rather than an HTTP error
+  if (!current || typeof current.isAh !== 'boolean') return cached?.info ?? null;
+
+  let info: PriceInfo | null = null;
+  if (!current.isAh) {
+    const buy = Number(current.buy) || 0;
+    const sell = Number(current.sell) || 0;
+    if (buy > 0 || sell > 0) info = { kind: 'bazaar', buy, sell };
+  } else {
+    const [bin, history] = await Promise.all([
+      priceJson(`${base}/bin${q}`),
+      priceJson(`${base}/history/week${q}`),
+    ]);
+    const lowestBin = typeof bin?.lowest === 'number' && bin.lowest > 0 ? bin.lowest : null;
+    let avg3d: number | null = null;
+    let sales3d = 0;
+    if (Array.isArray(history)) {
+      const cutoff = Date.now() - 3 * 86400e3;
+      let coins = 0;
+      for (const bucket of history) {
+        if (typeof bucket?.time !== 'string') continue;
+        // bucket times are UTC but lack a zone marker
+        const t = Date.parse(bucket.time.endsWith('Z') ? bucket.time : bucket.time + 'Z');
+        const volume = Number(bucket.volume) || 0;
+        const avg = Number(bucket.avg) || 0;
+        if (!Number.isFinite(t) || t < cutoff || volume <= 0 || avg <= 0) continue;
+        coins += avg * volume;
+        sales3d += volume;
+      }
+      if (sales3d > 0) avg3d = coins / sales3d;
+    }
+    if (lowestBin != null || avg3d != null) info = { kind: 'ah', lowestBin, avg3d, sales3d };
+  }
+
+  priceCache[key] = { fetchedAt: Date.now(), info };
+  savePriceCacheSoon();
+  return info;
+}
+
 // -------------------------------------------------------------------- window
 
 function createWindow() {
@@ -418,6 +507,8 @@ app.whenReady().then(() => {
 
   ipcMain.handle('wiki:extract', (_e, id: string, urls: string[]) => fetchWikiExtract(id, urls));
 
+  ipcMain.handle('price:get', (_e, id: string, rarity?: string) => fetchPrice(id, rarity));
+
   ipcMain.handle('settings:get', () => readSettings());
 
   ipcMain.handle('settings:patch', (_e, patch: Partial<typeof DEFAULT_SETTINGS>) => {
@@ -427,7 +518,7 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle('shell:openExternal', (_e, url: string) => {
-    if (hostAllowed(url, ALLOWED_WIKI_HOSTS)) shell.openExternal(url);
+    if (hostAllowed(url, ALLOWED_LINK_HOSTS)) shell.openExternal(url);
   });
 
   ipcMain.handle('update:check', () => checkForUpdate());
