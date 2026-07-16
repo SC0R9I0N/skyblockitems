@@ -17,6 +17,9 @@ const api = {
     | { kind: 'bazaar'; buy: number; sell: number }
     | null
   > => ipcRenderer.invoke('price:get', id, rarity),
+  listBuilds: (): Promise<unknown[]> => ipcRenderer.invoke('builds:list'),
+  saveBuild: (build: unknown): Promise<unknown[]> => ipcRenderer.invoke('builds:save', build),
+  deleteBuild: (id: string): Promise<unknown[]> => ipcRenderer.invoke('builds:delete', id),
   openExternal: (url: string): Promise<void> => ipcRenderer.invoke('shell:openExternal', url),
   getSettings: (): Promise<Record<string, boolean>> => ipcRenderer.invoke('settings:get'),
   patchSettings: (patch: Record<string, boolean>): Promise<Record<string, boolean>> =>

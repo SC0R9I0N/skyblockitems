@@ -681,10 +681,24 @@ console.log('[2/8] NEU repo tarball...');
 const tarball = await cached('neu.tar.gz', () => fetchBuffer(NEU_TARBALL_URL));
 const neuItems = new Map();
 let petNums = {};
+let enchantConsts = {};
+let reforgeConsts = {};
 for (const { name, data } of tarEntries(zlib.gunzipSync(tarball))) {
   if (name.endsWith('/constants/petnums.json')) {
     try {
       petNums = JSON.parse(data.toString('utf8'));
+    } catch {}
+    continue;
+  }
+  if (name.endsWith('/constants/enchants.json')) {
+    try {
+      enchantConsts = JSON.parse(data.toString('utf8'));
+    } catch {}
+    continue;
+  }
+  if (name.endsWith('/constants/reforgestones.json')) {
+    try {
+      reforgeConsts = JSON.parse(data.toString('utf8'));
     } catch {}
     continue;
   }
@@ -730,6 +744,10 @@ for (const h of hypixel.items) {
     wiki: neu?.info?.filter((u) => typeof u === 'string' && u.startsWith('http')),
     isVanilla: isVanillaItem(h, neu) || undefined,
     powerStone: parsePowerStone(neu?.lore) ?? undefined,
+    // one entry per socket, e.g. ["COMBAT","COMBAT","JASPER"] (build planner)
+    gemstoneSlots: h.gemstone_slots?.length
+      ? h.gemstone_slots.map((s) => s.slot_type)
+      : undefined,
   };
   items.push(item);
 }
@@ -797,7 +815,37 @@ console.log(`      ${dyeCount} dyes`);
 // of its "Enchanted Book" displayname; its real name is the first lore line.
 console.log('[4.6/8] enchanted books from NEU...');
 const COLOR_TIER = { f: 'COMMON', 7: 'COMMON', a: 'UNCOMMON', 9: 'RARE', 5: 'EPIC', 6: 'LEGENDARY', d: 'MYTHIC', b: 'DIVINE' };
+
+// NEU's constants/enchants.json says which item types each enchant applies to
+// ("enchants": type -> names) and which enchants are mutually exclusive
+// ("enchant_pools": groups — sharpness/smite/..., all ultimates, ...). Names
+// are lowercase enchant keys matching our book ids' base; type keys sometimes
+// use spaces ("FISHING ROD") — normalized to underscores.
+const normEnchType = (t) => String(t).toUpperCase().replace(/ /g, '_');
+const enchApplies = new Map(); // enchant name -> Set(TYPE)
+for (const [type, list] of Object.entries(enchantConsts.enchants ?? {})) {
+  for (const e of list ?? []) {
+    const k = String(e).toLowerCase();
+    if (!enchApplies.has(k)) enchApplies.set(k, new Set());
+    enchApplies.get(k).add(normEnchType(type));
+  }
+}
+const enchConflicts = new Map(); // enchant name -> Set(conflicting names)
+// NEU's pool list omits the classic sharpness/smite/bane exclusivity — add it.
+const EXTRA_POOLS = [['sharpness', 'smite', 'bane_of_arthropods']];
+for (const pool of [...(enchantConsts.enchant_pools ?? []), ...EXTRA_POOLS]) {
+  for (const e of pool) {
+    const k = String(e).toLowerCase();
+    if (!enchConflicts.has(k)) enchConflicts.set(k, new Set());
+    for (const other of pool) {
+      const o = String(other).toLowerCase();
+      if (o !== k) enchConflicts.get(k).add(o);
+    }
+  }
+}
+
 let bookCount = 0;
+let bookApplyCount = 0;
 const bookLevels = new Map(); // enchant base -> [{ level, item }]
 for (const [internal, json] of neuItems) {
   const m = internal.match(/^([A-Z0-9_]+);(\d+)$/);
@@ -806,6 +854,8 @@ for (const [internal, json] of neuItems) {
   if (existingIds.has(id)) continue;
   existingIds.add(id);
   const colorCode = (json.displayname?.match(/§([0-9a-f])/) ?? [])[1];
+  const enchKey = m[1].toLowerCase();
+  if (enchApplies.has(enchKey)) bookApplyCount++;
   const item = {
     id,
     name: stripCodes(json.lore?.[0] ?? '').trim() || `${titleCase(m[1])} ${m[2]}`,
@@ -817,6 +867,8 @@ for (const [internal, json] of neuItems) {
     sources: sourcesFromNeu(json),
     recipe: craftingGrid(json),
     wiki: json.info?.filter((u) => typeof u === 'string' && u.startsWith('http')),
+    enchApplies: enchApplies.has(enchKey) ? [...enchApplies.get(enchKey)].sort() : undefined,
+    enchConflicts: enchConflicts.has(enchKey) ? [...enchConflicts.get(enchKey)].sort() : undefined,
   };
   items.push(item);
   const levels = bookLevels.get(m[1]) ?? [];
@@ -829,7 +881,22 @@ for (const [internal, json] of neuItems) {
 for (const levels of bookLevels.values()) {
   levels.sort((a, b) => b.level - a.level)[0].item.maxEnchant = true;
 }
-console.log(`      ${bookCount} enchanted books (${bookLevels.size} enchantments)`);
+console.log(`      ${bookCount} enchanted books (${bookLevels.size} enchantments, ${bookApplyCount} with applicability data)`);
+
+// Reforge stone applicability from NEU constants ("SWORD/BOW" etc.), used by
+// the build planner to offer only stones that fit the selected gear piece.
+{
+  let typed = 0;
+  for (const it of items) {
+    if (it.category !== 'REFORGE_STONE') continue;
+    const rs = reforgeConsts[it.id];
+    if (typeof rs?.itemTypes === 'string' && rs.itemTypes) {
+      it.reforgeTypes = rs.itemTypes.toUpperCase().split('/');
+      typed++;
+    }
+  }
+  console.log(`[4.65/8] reforge stone types: ${typed} stones with applicability data`);
+}
 
 // First-seen ledger driving the "New" tab: ids the pipeline has never seen
 // before get today's date. Seed the ledger once with
@@ -974,6 +1041,33 @@ console.log('[6/8] wiki "Obtaining" sections (items with no sources)...');
   }
   saveWikiCache('wiki-sources.json', srcCache);
   console.log(`      ${filled}/${candidates.length} empty-source items filled from the wiki`);
+}
+
+// FurfSky pack sprites bundled in data/icons/ take priority inside the app's
+// sbicon:// handler, but regenerating the dataset used to reset those items'
+// icon kind to 'skull' — smooth-scaling 16px pixel art into a blur (the pack
+// mapper's kind flip lives in items.json, which this script rewrites).
+// Re-derive it here so `npm run data` stays idempotent: a skull-kind item
+// whose bundled icon is small pixel art (or an animated pack gif) renders
+// pixelated.
+console.log('[6.5/8] bundled pack sprites -> pixelated icon kind...');
+{
+  let flipped = 0;
+  for (const it of items) {
+    if (it.icon.kind !== 'skull') continue;
+    const fileId = it.id.replace(/:/g, '=');
+    let isPixelArt = fs.existsSync(path.join(ICONS_DIR, `${fileId}.gif`));
+    const pngPath = path.join(ICONS_DIR, `${fileId}.png`);
+    if (!isPixelArt && fs.existsSync(pngPath)) {
+      const buf = fs.readFileSync(pngPath);
+      isPixelArt = buf.length > 24 && buf.readUInt32BE(16) <= 64; // PNG IHDR width
+    }
+    if (isPixelArt) {
+      it.icon = { ...it.icon, kind: 'texture' };
+      flipped++;
+    }
+  }
+  console.log(`      ${flipped} skull icons flipped to pixelated (bundled pack art)`);
 }
 
 console.log('[7/8] reverse "used in" index...');

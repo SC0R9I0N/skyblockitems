@@ -4,6 +4,7 @@ import { TabBar } from './components/TabBar';
 import { ItemGrid } from './components/ItemGrid';
 import { SearchBar } from './components/SearchBar';
 import { DetailPanel } from './components/DetailPanel';
+import { BuildsPanel } from './components/BuildsPanel';
 import type { SortKey, TabId } from './types';
 
 export default function App() {
@@ -87,22 +88,28 @@ export default function App() {
       </div>
       <div className="main-row">
         <TabBar tab={store.tab} counts={counts} onChange={store.setTab} />
-        <ItemGrid
-          items={deferredItems}
-          selectedId={store.selectedId}
-          favorites={store.favorites}
-          onSelect={store.select}
-          onToggleFavorite={store.toggleFavorite}
-        />
-        {store.selected && (
-          <DetailPanel
-            item={store.selected}
-            byId={store.byId}
-            favorited={store.favorites.has(store.selected.id)}
-            onToggleFavorite={store.toggleFavorite}
-            onSelect={store.select}
-            onClose={() => store.select(null)}
-          />
+        {store.tab === 'builds' ? (
+          <BuildsPanel />
+        ) : (
+          <>
+            <ItemGrid
+              items={deferredItems}
+              selectedId={store.selectedId}
+              favorites={store.favorites}
+              onSelect={store.select}
+              onToggleFavorite={store.toggleFavorite}
+            />
+            {store.selected && (
+              <DetailPanel
+                item={store.selected}
+                byId={store.byId}
+                favorited={store.favorites.has(store.selected.id)}
+                onToggleFavorite={store.toggleFavorite}
+                onSelect={store.select}
+                onClose={() => store.select(null)}
+              />
+            )}
+          </>
         )}
       </div>
       <SearchBar

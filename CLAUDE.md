@@ -93,8 +93,6 @@ Begin by designing the full architecture of the standalone app. Then produce the
 
 Prioritize correctness, completeness, and production‑ready structure.
 
-# New Additions for CLAUDE.md v2
-
 ## Dark Mode Toggle
 - Add a UI toggle that switches the entire app between:
   - Minecraft’s default light‑gray UI
@@ -175,3 +173,30 @@ Prioritize correctness, completeness, and production‑ready structure.
   - Vanilla‑item filtering toggle
 - Calculated stats must be cached to avoid unnecessary recomputation.
 - All stat displays must use pixelated Minecraft‑style UI elements.
+
+# Additional Feature Notes / TODO (Builds Section Additions)
+
+## Builds Section
+- Add a dedicated **“Builds”** section in the app.
+- Users should be able to:
+  - Create a new hypothetical build
+  - View all saved builds
+  - Edit an existing build
+  - Delete builds
+- Builds must store:
+  - Selected item or full armor set
+  - Applied enchantments, reforges, gemstones, upgrades, modifiers
+  - Hypothetical pet and pet item
+  - Catacombs level if the selected item is a Catacombs/dungeon item
+  - Any dungeon stars or master stars
+- Builds must be saved locally and persist across app restarts.
+
+## Estimated Price Calculation
+- Each build should display an **estimated total price** of the setup.
+- Price estimation must consider:
+  - Base item cost
+  - Cost of enchantments
+  - Cost of reforges
+  - Cost of gemstones
+  - Cost of upgrades (e.g., dungeon stars)
+  - Cost of pet and pet item

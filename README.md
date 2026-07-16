@@ -72,8 +72,9 @@ repository's `build-info.json`, and silently reinstall and relaunch itself.
 - **Lore tooltips** — full §-color-coded lore plus market prices on hover; long tooltips cap at a
   maximum height and scroll with **Ctrl + mouse wheel**.
 - **Tabs** — All Items · ✨ New · Weapons · Armor · Equipment · Accessories · Cosmetics · Pets ·
-  Pet Items · Enchants · Misc · ★ Favorites. The **New** tab surfaces items recently added to
-  the game; **Enchants** lists every enchanted book (154 enchantments, one entry per level).
+  Pet Items · Enchants · Misc · ★ Favorites · 🛠 Builds. The **New** tab surfaces items recently
+  added to the game; **Enchants** lists every enchanted book (154 enchantments, one entry per
+  level); **Builds** opens the build planner.
 - **Instant search** — live, case-insensitive substring match over name + ID, memoized per
   keystroke and rendered through `useDeferredValue` so typing stays smooth across the full
   dataset. `Ctrl+F` focuses the bar.
@@ -109,6 +110,32 @@ Every tradeable item shows a **Market Prices** card sourced from the
 - **Calculator panel** — Minecraft-styled keypad supporting `+ - * /`, parentheses, unary minus,
   and scientific notation (`1.5e3`), implemented as a ~90-line tokenizer + recursive-descent
   parser (no `eval`).
+
+### Build planner
+
+The **🛠 Builds** tab is a hypothetical build planner:
+
+- Compose a build around **either** a single weapon/item **or** a full armor set (the editor
+  enforces the choice), plus a pet + pet item (with rarity).
+- **Per-piece enchants, reforge, and upgrades with real game rules** — each gear piece carries
+  its own enchant list, reforge stone, and upgrade items. Enchants are filtered by NEU's
+  enchant tables (helmet-only Respiration, chestplate-only Counter-Strike, boots-only Sugar
+  Rush, sword vs bow pools, …) with conflicts hidden (Sharpness/Smite/Bane, protection
+  variants, one Ultimate max); picking another level of an applied enchant swaps it in place.
+  Reforge stones are likewise filtered by what they can be applied to (sword stones never
+  offered for boots).
+- **Gemstones socket per slot** — items expose their real gemstone sockets (from the Hypixel
+  API); each socket only accepts matching gems (an Amber slot takes only Amber; Combat ⚔,
+  Defensive ☤, Mining ✦, Universal ❂, and Chisel ❥ slots accept their wiki-defined groups).
+  Items without sockets get no gemstone UI at all.
+- **Potato books** are one click per piece — "+ Hot Potato Books (×10)" / "+ Fuming (×5)"
+  applies the full stack (nobody applies less) and is offered only on weapons and armor; the
+  bazaar cost is included in the estimate.
+- Dungeon gear reveals extra fields: Catacombs level, dungeon stars, and master stars.
+- Every build shows an **estimated total price**: each component is priced from live market
+  data (lowest BIN / bazaar buy), master stars are priced automatically from their star items,
+  and components without market data are listed but excluded from the total.
+- Builds persist across restarts (`builds.json`) and can be created, edited, and deleted.
 
 ### Personalization
 
@@ -165,7 +192,7 @@ npm run dev          # launch in dev mode (Vite HMR + Electron)
 │   • IPC data:load / data:refresh   dataset load + live re-merge     │
 │   • IPC price:get                  Coflnet market prices (cached)   │
 │   • IPC wiki:extract               MediaWiki intro extracts (cached)│
-│   • IPC favorites:* / settings:*   atomic JSON persistence          │
+│   • IPC favorites:* / settings:* / builds:*   atomic JSON persistence│
 │   • IPC update:check / update:apply  SHA-256-verified self-update   │
 │                                                                     │
 │ electron/preload.ts  contextBridge → window.sbApi                   │
@@ -262,6 +289,7 @@ All persistence lives in Electron's user-data directory —
 | File | Contents | Notes |
 | --- | --- | --- |
 | `favorites.json` | Favorited item IDs | Written atomically on every toggle |
+| `builds.json` | Saved hypothetical builds | Written atomically on save/delete |
 | `settings.json` | Theme, filters, stat-panel and sort preferences | Merged over defaults on load |
 | `items.json` | Refreshed dataset copy | Used only while newer than the bundled dataset |
 | `priceCache.json` | Market prices per item (+ pet rarity) | 10-minute TTL |

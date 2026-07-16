@@ -109,6 +109,9 @@ async function refreshDataset(): Promise<string> {
       existing.tier = h.tier ?? existing.tier;
       existing.stats = h.stats && Object.keys(h.stats).length ? h.stats : existing.stats;
       existing.npcSellPrice = h.npc_sell_price ?? existing.npcSellPrice;
+      existing.gemstoneSlots = h.gemstone_slots?.length
+        ? h.gemstone_slots.map((s: any) => s.slot_type)
+        : existing.gemstoneSlots;
       if (h.category && h.category !== existing.category) {
         existing.category = h.category;
         existing.tab = tabFor(h.category, h.id);
@@ -131,6 +134,9 @@ async function refreshDataset(): Promise<string> {
         lore: [],
         stats: h.stats,
         npcSellPrice: h.npc_sell_price,
+        gemstoneSlots: h.gemstone_slots?.length
+          ? h.gemstone_slots.map((s: any) => s.slot_type)
+          : undefined,
         icon,
         sources: [],
         addedAt: new Date().toISOString().slice(0, 10), // first seen now → "New" tab
@@ -160,6 +166,45 @@ function writeFavorites(store: FavStore) {
   const tmp = file + '.tmp';
   fs.writeFileSync(tmp, JSON.stringify(store, null, 2));
   fs.renameSync(tmp, file);
+}
+
+// -------------------------------------------------------------------- builds
+
+// Hypothetical builds (Builds section). Stored as opaque renderer-owned
+// objects; the main process only enforces shape, count, and size limits.
+type BuildsStore = { builds: Array<Record<string, unknown>> };
+
+function readBuilds(): BuildsStore {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(userFile('builds.json'), 'utf8'));
+    if (Array.isArray(parsed?.builds)) return { builds: parsed.builds };
+  } catch {}
+  return { builds: [] };
+}
+
+function writeBuilds(store: BuildsStore) {
+  const file = userFile('builds.json');
+  const tmp = file + '.tmp';
+  fs.writeFileSync(tmp, JSON.stringify(store, null, 2));
+  fs.renameSync(tmp, file);
+}
+
+function upsertBuild(build: unknown): BuildsStore['builds'] {
+  const store = readBuilds();
+  if (
+    typeof build !== 'object' ||
+    build === null ||
+    typeof (build as any).id !== 'string' ||
+    JSON.stringify(build).length > 20_000
+  ) {
+    return store.builds;
+  }
+  const b = build as Record<string, unknown> & { id: string };
+  const idx = store.builds.findIndex((x) => x.id === b.id);
+  if (idx >= 0) store.builds[idx] = b;
+  else if (store.builds.length < 200) store.builds.push(b);
+  writeBuilds(store);
+  return store.builds;
 }
 
 // ------------------------------------------------------------------ settings
@@ -522,6 +567,17 @@ app.whenReady().then(() => {
   ipcMain.handle('wiki:extract', (_e, id: string, urls: string[]) => fetchWikiExtract(id, urls));
 
   ipcMain.handle('price:get', (_e, id: string, rarity?: string) => fetchPrice(id, rarity));
+
+  ipcMain.handle('builds:list', () => readBuilds().builds);
+
+  ipcMain.handle('builds:save', (_e, build: unknown) => upsertBuild(build));
+
+  ipcMain.handle('builds:delete', (_e, id: string) => {
+    const store = readBuilds();
+    store.builds = store.builds.filter((b) => b.id !== id);
+    writeBuilds(store);
+    return store.builds;
+  });
 
   ipcMain.handle('settings:get', () => readSettings());
 

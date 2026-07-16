@@ -13,6 +13,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'enchants', label: 'Enchants' },
   { id: 'misc', label: 'Misc' },
   { id: 'favorites', label: '★ Favorites' },
+  { id: 'builds', label: '🛠 Builds' },
 ];
 
 interface Props {

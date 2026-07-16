@@ -10,7 +10,8 @@ export type TabId =
   | 'pet_items'
   | 'enchants'
   | 'misc'
-  | 'favorites';
+  | 'favorites'
+  | 'builds';
 
 export interface IconInfo {
   kind: 'skull' | 'texture' | 'wiki' | 'none';
@@ -53,6 +54,38 @@ export type PriceInfo =
 
 export type SortKey = 'name' | 'rarity' | 'release';
 
+/** gear slots a build can fill: one main item and/or a full armor set */
+export type GearSlot = 'item' | 'helmet' | 'chestplate' | 'leggings' | 'boots';
+
+/** one selected gear item and everything applied to it */
+export interface GearPiece {
+  id: string;
+  enchantments: string[]; // ENCHANTMENT_<NAME>_<LVL> item ids
+  reforge?: string; // reforge stone item id
+  upgrades: string[]; // modifier item ids (recomb, Art of War, ...)
+  /** socketed gemstone item ids, index-aligned with the item's gemstoneSlots */
+  gemstones?: (string | null)[];
+  /** applied Hot Potato Books (0 or the full 10; weapons/armor only) */
+  hotPotatoBooks?: number;
+  /** applied Fuming Potato Books (0 or the full 5; weapons/armor only) */
+  fumingPotatoBooks?: number;
+}
+
+/** a saved hypothetical build (Builds tab) */
+export interface Build {
+  id: string;
+  name: string;
+  updatedAt: string; // ISO
+  /** either the 'item' slot OR armor slots — the editor enforces the choice */
+  gear: Partial<Record<GearSlot, GearPiece>>;
+  petId?: string; // PET_*
+  petRarity?: string;
+  petItemId?: string;
+  catacombsLevel?: number;
+  dungeonStars?: number; // 0-5
+  masterStars?: number; // 0-5
+}
+
 export interface AppSettings {
   darkMode: boolean;
   hideVanilla: boolean;
@@ -66,7 +99,7 @@ export interface SkyblockItem {
   id: string;
   name: string;
   category: string;
-  tab: Exclude<TabId, 'all' | 'favorites' | 'new'>;
+  tab: Exclude<TabId, 'all' | 'favorites' | 'new' | 'builds'>;
   tier: string;
   lore: string[];
   stats?: Record<string, number>;
@@ -83,6 +116,14 @@ export interface SkyblockItem {
   petInfo?: { type: string; rarities: string[] };
   /** enchanted book at its enchantment's highest level — name renders chroma */
   maxEnchant?: boolean;
+  /** enchanted book: item types it can be applied to (NEU enchant tables) */
+  enchApplies?: string[];
+  /** enchanted book: mutually exclusive enchant names (lowercase bases) */
+  enchConflicts?: string[];
+  /** reforge stone: item types it applies to (NEU, e.g. SWORD, ARMOR, ROD) */
+  reforgeTypes?: string[];
+  /** gemstone sockets, one entry per slot (RUBY, COMBAT, UNIVERSAL, ...) */
+  gemstoneSlots?: string[];
   isVanilla?: boolean;
   /** ISO date (YYYY-MM-DD) the item was first seen in the game's data */
   addedAt?: string;
@@ -106,6 +147,9 @@ declare global {
       toggleFavorite: (id: string) => Promise<string[]>;
       wikiExtract: (id: string, urls: string[]) => Promise<{ url: string; text: string } | null>;
       getPrice: (id: string, rarity?: string) => Promise<PriceInfo | null>;
+      listBuilds: () => Promise<Build[]>;
+      saveBuild: (build: Build) => Promise<Build[]>;
+      deleteBuild: (id: string) => Promise<Build[]>;
       openExternal: (url: string) => Promise<void>;
       getSettings: () => Promise<AppSettings>;
       patchSettings: (patch: Partial<AppSettings>) => Promise<AppSettings>;

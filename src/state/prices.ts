@@ -18,6 +18,26 @@ export function highestRarity(rarities: string[]): string | undefined {
   return best;
 }
 
+/** Imperative cached lookup (same cache as usePrice) for non-hook callers. */
+export async function getPriceCached(
+  itemId: string,
+  rarity?: string,
+): Promise<PriceInfo | null> {
+  const key = rarity ? `${itemId}@${rarity}` : itemId;
+  const entry = cache.get(key);
+  if (entry && Date.now() - entry.fetchedAt < TTL_MS) return entry.info;
+  const info = await window.sbApi.getPrice(itemId, rarity).catch(() => null);
+  cache.set(key, { info, fetchedAt: Date.now() });
+  return info;
+}
+
+/** the single number a component contributes to a build estimate */
+export function priceValue(info: PriceInfo | null): number | null {
+  if (!info) return null;
+  if (info.kind === 'bazaar') return info.buy > 0 ? info.buy : null;
+  return info.lowestBin ?? info.avg3d;
+}
+
 /**
  * Cached market-price lookup. Returns undefined while unresolved, null when
  * the item has no market data. `delayMs` debounces hover-driven lookups so
