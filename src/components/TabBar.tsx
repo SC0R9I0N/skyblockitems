@@ -10,6 +10,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'cosmetics', label: 'Cosmetics' },
   { id: 'pets', label: 'Pets' },
   { id: 'pet_items', label: 'Pet Items' },
+  { id: 'enchants', label: 'Enchants' },
   { id: 'misc', label: 'Misc' },
   { id: 'favorites', label: '★ Favorites' },
 ];

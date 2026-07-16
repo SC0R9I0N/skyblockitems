@@ -11,6 +11,13 @@ protocol.registerSchemesAsPrivileged([
 
 const DEV_URL = process.env.VITE_DEV_SERVER_URL;
 
+// SB_TRACE=1 prints startup milestones (ms since process start) to stdout —
+// run the exe from a terminal to read them.
+const trace = process.env.SB_TRACE
+  ? (label: string) => console.log(`[startup] ${label} +${Math.round(process.uptime() * 1000)}ms`)
+  : () => {};
+trace('main module loaded');
+
 const dataDir = () =>
   app.isPackaged ? path.join(process.resourcesPath, 'data') : path.join(app.getAppPath(), 'data');
 const userFile = (name: string) => path.join(app.getPath('userData'), name);
@@ -91,7 +98,7 @@ async function refreshDataset(): Promise<string> {
   const A = new Set(['HELMET', 'CHESTPLATE', 'LEGGINGS', 'BOOTS']);
   const E = new Set(['NECKLACE', 'CLOAK', 'BELT', 'GLOVES', 'BRACELET']);
   const tabFor = (c: string, id = '') =>
-    c === 'COSMETIC' || id.startsWith('DYE_') ? 'cosmetics' : W.has(c) ? 'weapons' : A.has(c) ? 'armor' : c === 'ACCESSORY' ? 'accessories' : E.has(c) ? 'equipment' : c === 'PET_ITEM' ? 'pet_items' : c === 'PET' ? 'pets' : 'misc';
+    c === 'COSMETIC' || id.startsWith('DYE_') ? 'cosmetics' : W.has(c) ? 'weapons' : A.has(c) ? 'armor' : c === 'ACCESSORY' ? 'accessories' : E.has(c) ? 'equipment' : c === 'PET_ITEM' ? 'pet_items' : c === 'PET' ? 'pets' : c === 'ENCHANTED_BOOK' ? 'enchants' : 'misc';
 
   // some API names carry %%color%% templating (e.g. "%%red%%Volcanic Rock")
   const cleanName = (n?: string) => n?.replace(/%%[a-z_]+%%/g, '').trim();
@@ -432,6 +439,7 @@ function createWindow() {
       sandbox: true,
     },
   });
+  win.webContents.once('did-finish-load', () => trace('renderer did-finish-load'));
   if (DEV_URL) {
     win.loadURL(DEV_URL);
   } else {
@@ -440,6 +448,7 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  trace('app ready');
   const iconCacheDir = userFile('iconCache');
   fs.mkdirSync(iconCacheDir, { recursive: true });
 
@@ -486,8 +495,10 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle('data:load', () => {
+    trace('data:load requested');
     const text = loadDatasetText();
     indexIcons(text);
+    trace('data:load served');
     return text;
   });
 

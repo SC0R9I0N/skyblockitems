@@ -1,7 +1,8 @@
-import { memo, useLayoutEffect, useRef } from 'react';
+import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { SkyblockItem } from '../types';
-import { McText, tierColor } from '../mc/format';
+import { fmtCoins, McText, tierColor, titleCase } from '../mc/format';
+import { highestRarity, usePrice } from '../state/prices';
 
 interface Props {
   item: SkyblockItem;
@@ -13,16 +14,37 @@ interface Props {
 
 const MARGIN = 8; // minimum gap to every window edge
 const GAP = 16; // gap between the cursor and the tooltip
+const HOVER_PRICE_DELAY = 250; // ms before a hover triggers a price lookup
+
+function PriceLine({ label, value }: { label: string; value: number | null }) {
+  if (value == null) return null;
+  return (
+    <div className="mc-tooltip-line">
+      <span style={{ color: '#AAAAAA' }}>{label}: </span>
+      <span style={{ color: '#FFAA00' }}>{fmtCoins(value)} coins</span>
+    </div>
+  );
+}
 
 /**
- * Hover tooltip: item name + lore lines. Location-aware — the real rendered
- * size is measured before paint, the tooltip flips to the left of the cursor
- * near the right edge (and vice versa), shifts up near the bottom and down
- * near the top, and is always clamped fully inside the window, so it never
- * covers the cursor target or leaves the viewport.
+ * Hover tooltip: item name + lore lines + market prices. Location-aware — the
+ * real rendered size is measured before paint, the tooltip flips to the left
+ * of the cursor near the right edge (and vice versa), shifts up near the
+ * bottom and down near the top, and is always clamped fully inside the
+ * window, so it never covers the cursor target or leaves the viewport.
+ * Content taller than the max height scrolls with Ctrl + wheel.
  */
 export const Tooltip = memo(function Tooltip({ item, x, y, host }: Props) {
   const ref = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [overflowing, setOverflowing] = useState(false);
+
+  // pets are priced at their highest rarity here; the detail panel breaks
+  // the price down per rarity
+  const petRarity = item.petInfo?.rarities?.length
+    ? highestRarity(item.petInfo.rarities)
+    : undefined;
+  const price = usePrice(item.id, petRarity, HOVER_PRICE_DELAY);
 
   useLayoutEffect(() => {
     const el = ref.current;
@@ -53,29 +75,80 @@ export const Tooltip = memo(function Tooltip({ item, x, y, host }: Props) {
 
     el.style.left = `${left}px`;
     el.style.top = `${top}px`;
+
+    const sc = scrollRef.current;
+    if (sc) setOverflowing(sc.scrollHeight > sc.clientHeight + 1);
   });
 
-  const maxLines = 24;
-  const lore = item.lore.slice(0, maxLines);
+  // fresh item → back to the top of its lore
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: 0 });
+  }, [item.id]);
+
+  // Ctrl + wheel scrolls the tooltip. The tooltip itself is pointer-events:
+  // none (the cursor stays on the grid slot), so the wheel event is captured
+  // at the window; preventDefault keeps the grid from scrolling underneath.
+  useEffect(() => {
+    const onWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey) return;
+      const sc = scrollRef.current;
+      if (!sc || sc.scrollHeight <= sc.clientHeight) return;
+      e.preventDefault();
+      sc.scrollTop += e.deltaY;
+    };
+    window.addEventListener('wheel', onWheel, { passive: false });
+    return () => window.removeEventListener('wheel', onWheel);
+  }, []);
+
   // Portaled to <body>: an ancestor with backdrop-filter (the glass panels)
   // would otherwise become the containing block for position:fixed and
   // shift the tooltip by the panel's offset.
   return createPortal(
     <div ref={ref} className="mc-tooltip" style={{ left: -9999, top: -9999 }}>
-      <div className="mc-tooltip-title" style={{ color: tierColor(item.tier) }}>
-        {item.name}
+      <div ref={scrollRef} className="mc-tooltip-scroll">
+        <div
+          className={`mc-tooltip-title${item.maxEnchant ? ' chroma-text' : ''}`}
+          style={item.maxEnchant ? undefined : { color: tierColor(item.tier) }}
+        >
+          {item.name}
+        </div>
+        {item.lore.map((line, i) => (
+          <div key={i} className="mc-tooltip-line">
+            <McText text={line} defaultColor="#AAAAAA" />
+          </div>
+        ))}
+        {item.lore.length === 0 && (
+          <div className="mc-tooltip-line" style={{ color: '#555555' }}>
+            {item.category === 'PET' ? 'Pet' : 'Click for details'}
+          </div>
+        )}
+        {price === undefined && (
+          <div className="mc-tooltip-price">
+            <div className="mc-tooltip-line" style={{ color: '#555555' }}>
+              Loading prices…
+            </div>
+          </div>
+        )}
+        {price != null && (
+          <div className="mc-tooltip-price">
+            {price.kind === 'ah' ? (
+              <>
+                <PriceLine
+                  label={petRarity ? `Lowest BIN (${titleCase(petRarity)})` : 'Lowest BIN'}
+                  value={price.lowestBin}
+                />
+                <PriceLine label="3-Day Avg" value={price.avg3d} />
+              </>
+            ) : (
+              <>
+                <PriceLine label="Bazaar Buy" value={price.buy} />
+                <PriceLine label="Bazaar Sell" value={price.sell} />
+              </>
+            )}
+          </div>
+        )}
       </div>
-      {lore.map((line, i) => (
-        <div key={i} className="mc-tooltip-line">
-          <McText text={line} defaultColor="#AAAAAA" />
-        </div>
-      ))}
-      {item.lore.length > maxLines && <div className="mc-tooltip-line" style={{ color: '#555555' }}>...</div>}
-      {item.lore.length === 0 && (
-        <div className="mc-tooltip-line" style={{ color: '#555555' }}>
-          {item.category === 'PET' ? 'Pet' : 'Click for details'}
-        </div>
-      )}
+      {overflowing && <div className="mc-tooltip-hint">Ctrl + Scroll for more</div>}
     </div>,
     document.body,
   );

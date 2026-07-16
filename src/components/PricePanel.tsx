@@ -1,17 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { PriceInfo, SkyblockItem } from '../types';
-import { tierColor } from '../mc/format';
-
-const trimNum = (v: number) =>
-  v >= 100 ? Math.round(v).toString() : v.toFixed(v >= 10 ? 1 : 2).replace(/\.?0+$/, '');
-
-// 135000000 -> "135M"; the full value lives in the hover title
-function fmtCoins(n: number): string {
-  if (n >= 1e9) return `${trimNum(n / 1e9)}B`;
-  if (n >= 1e6) return `${trimNum(n / 1e6)}M`;
-  if (n >= 1e3) return `${trimNum(n / 1e3)}k`;
-  return Math.round(n).toLocaleString('en-US');
-}
+import { fmtCoins, tierColor } from '../mc/format';
 
 function Coins({ value }: { value: number | null | undefined }) {
   if (value == null) return <span className="muted">—</span>;

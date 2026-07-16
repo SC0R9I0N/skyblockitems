@@ -130,3 +130,14 @@ export function titleCase(id: string): string {
     .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
     .join(' ');
 }
+
+const trimNum = (v: number) =>
+  v >= 100 ? Math.round(v).toString() : v.toFixed(v >= 10 ? 1 : 2).replace(/\.?0+$/, '');
+
+/** 135000000 -> "135M" (Hypixel-style coin abbreviation) */
+export function fmtCoins(n: number): string {
+  if (n >= 1e9) return `${trimNum(n / 1e9)}B`;
+  if (n >= 1e6) return `${trimNum(n / 1e6)}M`;
+  if (n >= 1e3) return `${trimNum(n / 1e3)}k`;
+  return Math.round(n).toLocaleString('en-US');
+}

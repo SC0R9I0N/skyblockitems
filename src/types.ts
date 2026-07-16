@@ -8,6 +8,7 @@ export type TabId =
   | 'cosmetics'
   | 'pets'
   | 'pet_items'
+  | 'enchants'
   | 'misc'
   | 'favorites';
 
@@ -80,6 +81,8 @@ export interface SkyblockItem {
   wiki?: string[];
   usedIn?: string[];
   petInfo?: { type: string; rarities: string[] };
+  /** enchanted book at its enchantment's highest level — name renders chroma */
+  maxEnchant?: boolean;
   isVanilla?: boolean;
   /** ISO date (YYYY-MM-DD) the item was first seen in the game's data */
   addedAt?: string;

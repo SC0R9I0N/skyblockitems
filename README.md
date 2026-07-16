@@ -69,8 +69,11 @@ repository's `build-info.json`, and silently reinstall and relaunch itself.
 
 - **Minecraft-styled grid** — a windowed virtual grid of inventory slots with rarity-colored,
   hover-glowing borders (Common gray through Very Special gold; brightness adapts to dark mode).
+- **Lore tooltips** — full §-color-coded lore plus market prices on hover; long tooltips cap at a
+  maximum height and scroll with **Ctrl + mouse wheel**.
 - **Tabs** — All Items · ✨ New · Weapons · Armor · Equipment · Accessories · Cosmetics · Pets ·
-  Pet Items · Misc · ★ Favorites. The **New** tab surfaces items recently added to the game.
+  Pet Items · Enchants · Misc · ★ Favorites. The **New** tab surfaces items recently added to
+  the game; **Enchants** lists every enchanted book (154 enchantments, one entry per level).
 - **Instant search** — live, case-insensitive substring match over name + ID, memoized per
   keystroke and rendered through `useDeferredValue` so typing stays smooth across the full
   dataset. `Ctrl+F` focuses the bar.
@@ -93,6 +96,8 @@ Every tradeable item shows a **Market Prices** card sourced from the
 - **Auction items** — lowest BIN plus a volume-weighted **3-day average** with the sales count.
 - **Pets** — a per-rarity price table (each rarity priced independently).
 - **Bazaar items** — instant buy / sell prices.
+- Prices also appear directly in the **hover tooltip** (pets priced at their highest rarity there);
+  hover lookups are debounced so sweeping the cursor across the grid stays quiet.
 - Values are cached for 10 minutes on disk; a network failure falls back to the last cached value.
 
 ### Calculators & computed stats
@@ -244,6 +249,7 @@ type PriceInfo =
 | Cosmetics | `COSMETIC` (skins) + `DYE_*` armor dyes |
 | Pets | from NEU pet definitions |
 | Pet Items | `PET_ITEM` |
+| Enchants | enchanted books from NEU (`ENCHANTMENT_<NAME>_<LEVEL>`, one item per level) |
 | Misc | everything else (tools, reforge stones, consumables, …) |
 
 ---
@@ -318,6 +324,7 @@ The app icon lives at `build/icon.png`; electron-builder converts it per platfor
 | Market prices show "No auction or bazaar listings found" | The item is untradeable, or the price API is unreachable; prices reappear on the next open once connectivity returns |
 | Icons missing while offline | Icons stream on first view; run `npm run data:icons` before packaging for a fully offline build |
 | Update button reports no update | The updater compares build IDs, not versions — it only offers builds published to this repository |
+| Slow first launch | Windows scans freshly installed binaries (Defender/SmartScreen); launches after the first are much faster. Set `SB_TRACE=1` and run the exe from a terminal to print startup timings |
 
 ---
 

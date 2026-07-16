@@ -472,6 +472,9 @@ body {
   position: fixed;
   z-index: 100;
   max-width: 340px;
+  max-height: min(560px, 75vh);
+  display: flex;
+  flex-direction: column;
   padding: 10px 14px;
   background: var(--dark-card-bg);
   border: 1px solid var(--dark-card-border);
@@ -493,6 +496,58 @@ body {
 .mc-tooltip-line {
   white-space: pre-wrap;
   min-height: 18px;
+}
+
+/* Animated RGB "chroma" text for max-level enchant names (Hypixel-style).
+   The gradient repeats so the slide loops seamlessly; text-shadow is dropped
+   because it renders over the transparent fill and muddies the colors. */
+.chroma-text {
+  background: linear-gradient(
+    90deg,
+    #ff5555, #ffaa00, #ffff55, #55ff55, #55ffff, #5555ff, #ff55ff, #ff5555
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: none;
+  animation: chroma-slide 3s linear infinite;
+}
+
+@keyframes chroma-slide {
+  from {
+    background-position: 0% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* scrollable body — driven by Ctrl+wheel since the tooltip ignores the mouse */
+.mc-tooltip-scroll {
+  overflow-y: auto;
+  min-height: 0;
+  margin-right: -10px;
+  padding-right: 10px;
+}
+
+.mc-tooltip-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.mc-tooltip-price {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mc-tooltip-hint {
+  flex: none;
+  margin-top: 6px;
+  padding-top: 5px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 11px;
+  color: #8b8d97;
 }
 
 /* ---------------------------------------------------------------- search */

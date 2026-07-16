@@ -392,9 +392,16 @@ function craftingGrid(neu) {
   return slots.some(Boolean) ? { slots, count: r.count ?? 1 } : null;
 }
 
-// NEU ingredient ids may be pet ids like "ENDER_DRAGON;4" — map to our pet ids.
+// NEU ingredient ids may be pet ids like "ENDER_DRAGON;4" or enchanted books
+// like "CLEAVE;5" — map to our PET_* / ENCHANTMENT_*_* ids.
 function normalizeIngredient(id) {
-  if (id.includes(';')) return 'PET_' + id.split(';')[0];
+  if (id.includes(';')) {
+    const [base, lvl] = id.split(';');
+    if (neuItems.get(id)?.itemid === 'minecraft:enchanted_book') {
+      return `ENCHANTMENT_${base}_${lvl}`;
+    }
+    return 'PET_' + base;
+  }
   return id;
 }
 
@@ -784,11 +791,51 @@ for (const [internal, json] of neuItems) {
 }
 console.log(`      ${dyeCount} dyes`);
 
+// Enchanted books exist in NEU as one file per enchant level (CLEAVE;6).
+// Their app ids follow the bazaar product convention ENCHANTMENT_<NAME>_<LVL>
+// so market prices resolve without any mapping. The book's tier is the color
+// of its "Enchanted Book" displayname; its real name is the first lore line.
+console.log('[4.6/8] enchanted books from NEU...');
+const COLOR_TIER = { f: 'COMMON', 7: 'COMMON', a: 'UNCOMMON', 9: 'RARE', 5: 'EPIC', 6: 'LEGENDARY', d: 'MYTHIC', b: 'DIVINE' };
+let bookCount = 0;
+const bookLevels = new Map(); // enchant base -> [{ level, item }]
+for (const [internal, json] of neuItems) {
+  const m = internal.match(/^([A-Z0-9_]+);(\d+)$/);
+  if (!m || json.itemid !== 'minecraft:enchanted_book') continue;
+  const id = `ENCHANTMENT_${m[1]}_${m[2]}`;
+  if (existingIds.has(id)) continue;
+  existingIds.add(id);
+  const colorCode = (json.displayname?.match(/§([0-9a-f])/) ?? [])[1];
+  const item = {
+    id,
+    name: stripCodes(json.lore?.[0] ?? '').trim() || `${titleCase(m[1])} ${m[2]}`,
+    category: 'ENCHANTED_BOOK',
+    tab: 'enchants',
+    tier: COLOR_TIER[colorCode] ?? 'COMMON',
+    lore: json.lore ?? [],
+    icon: { kind: 'texture', url: TEXTURE_BASE + 'items/book_enchanted.png' },
+    sources: sourcesFromNeu(json),
+    recipe: craftingGrid(json),
+    wiki: json.info?.filter((u) => typeof u === 'string' && u.startsWith('http')),
+  };
+  items.push(item);
+  const levels = bookLevels.get(m[1]) ?? [];
+  levels.push({ level: Number(m[2]), item });
+  bookLevels.set(m[1], levels);
+  bookCount++;
+}
+// Each enchantment's highest level renders with chroma text (like Hypixel
+// shows maxed enchants).
+for (const levels of bookLevels.values()) {
+  levels.sort((a, b) => b.level - a.level)[0].item.maxEnchant = true;
+}
+console.log(`      ${bookCount} enchanted books (${bookLevels.size} enchantments)`);
+
 // First-seen ledger driving the "New" tab: ids the pipeline has never seen
 // before get today's date. Seed the ledger once with
 // scripts/seed-item-dates.mjs (it reconstructs this year's additions from
 // NEU git history); without it, no dates are stamped.
-console.log('[4.6/8] item added-dates...');
+console.log('[4.7/8] item added-dates...');
 {
   const DATES_FILE = path.join(OUT_DIR, 'item-dates.json');
   let ledger = null;
@@ -799,10 +846,17 @@ console.log('[4.6/8] item added-dates...');
   }
   if (ledger) {
     const today = new Date().toISOString().slice(0, 10);
+    // One-time backfill: the first run that includes enchanted books must not
+    // flood the "New" tab with 700+ ids, so they get an old sentinel date.
+    // Once the ledger knows the books, genuinely new enchants get real dates.
+    // (Threshold, not zero: a stray Hypixel item id can share the prefix.)
+    const backfillBooks =
+      Object.keys(ledger).filter((k) => k.startsWith('ENCHANTMENT_')).length < 10;
     let freshIds = 0;
     for (const it of items) {
       if (!ledger[it.id]) {
-        ledger[it.id] = today;
+        ledger[it.id] =
+          backfillBooks && it.id.startsWith('ENCHANTMENT_') ? '2019-01-01' : today;
         freshIds++;
       }
       it.addedAt = ledger[it.id];

@@ -57,7 +57,10 @@ export function DetailPanel({ item, byId, favorited, onToggleFavorite, onSelect,
           <ItemIcon id={item.id} name={item.name} kind={item.icon.kind} tint={item.tint} size={56} />
         </div>
         <div>
-          <h2 className="detail-name mc-shadow" style={{ color: tierColor(item.tier) }}>
+          <h2
+            className={`detail-name mc-shadow${item.maxEnchant ? ' chroma-text' : ''}`}
+            style={item.maxEnchant ? undefined : { color: tierColor(item.tier) }}
+          >
             {item.name}
           </h2>
           <div className="detail-sub">

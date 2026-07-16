@@ -11,7 +11,7 @@ import type { AppSettings, Dataset, SkyblockItem, TabId } from '../types';
 import { stripMc } from '../mc/format';
 
 /** game rarity order, lowest first (unknown tiers sort last) */
-const TIER_ORDER: Record<string, number> = {
+export const TIER_ORDER: Record<string, number> = {
   COMMON: 0,
   UNCOMMON: 1,
   RARE: 2,
