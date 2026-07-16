@@ -159,30 +159,30 @@ npm run dev          # launch in dev mode (Vite HMR + Electron)
 
 ```
 ┌────────────────────────────── run time ─────────────────────────────┐
-│ electron/main.ts  (main process — all disk & network access)       │
-│   • sbicon:// protocol  icon serving: bundled → disk cache →       │
-│     allowlisted remote download (cached; offline after first view) │
-│   • IPC data:load / data:refresh   dataset load + live re-merge    │
-│   • IPC price:get                  Coflnet market prices (cached)  │
+│ electron/main.ts  (main process — all disk & network access)        │
+│   • sbicon:// protocol  icon serving: bundled → disk cache →        │
+│     allowlisted remote download (cached; offline after first view)  │
+│   • IPC data:load / data:refresh   dataset load + live re-merge     │
+│   • IPC price:get                  Coflnet market prices (cached)   │
 │   • IPC wiki:extract               MediaWiki intro extracts (cached)│
-│   • IPC favorites:* / settings:*   atomic JSON persistence         │
-│   • IPC update:check / update:apply  SHA-256-verified self-update  │
+│   • IPC favorites:* / settings:*   atomic JSON persistence          │
+│   • IPC update:check / update:apply  SHA-256-verified self-update   │
 │                                                                     │
-│ electron/preload.ts  contextBridge → window.sbApi                  │
-│   (sandboxed, contextIsolation: true, nodeIntegration: false)      │
+│ electron/preload.ts  contextBridge → window.sbApi                   │
+│   (sandboxed, contextIsolation: true, nodeIntegration: false)       │
 │                                                                     │
-│ src/  (renderer — React 19 + TypeScript + Vite; no network access, │
-│        locked by CSP `connect-src 'self'`)                         │
-│   state/store.tsx        context + reducer: tab, query, sort,      │
-│                          selection, favorites; memoized filtering  │
-│   components/ItemGrid    windowed virtual grid of MC slots         │
-│   components/Tooltip     §-code colored lore tooltip               │
-│   components/DetailPanel icon, lore, prices, sources, recipe,      │
-│                          stats, wiki, favorite                     │
-│   components/PricePanel  lowest BIN / 3-day avg / bazaar card      │
-│   components/Calculator  standalone calculator panel               │
-│   mc/format.tsx          § color-code parser → styled spans        │
-│   styles/minecraft.css   themed slots, panels, tooltips            │
+│ src/  (renderer — React 19 + TypeScript + Vite; no network access,  │
+│        locked by CSP `connect-src 'self'`)                          │
+│   state/store.tsx        context + reducer: tab, query, sort,       │
+│                          selection, favorites; memoized filtering   │
+│   components/ItemGrid    windowed virtual grid of MC slots          │
+│   components/Tooltip     §-code colored lore tooltip                │
+│   components/DetailPanel icon, lore, prices, sources, recipe,       │
+│                          stats, wiki, favorite                      │
+│   components/PricePanel  lowest BIN / 3-day avg / bazaar card       │
+│   components/Calculator  standalone calculator panel                │
+│   mc/format.tsx          § color-code parser → styled spans         │
+│   styles/minecraft.css   themed slots, panels, tooltips             │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
